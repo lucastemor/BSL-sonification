@@ -1,39 +1,23 @@
-// Handy functions"
+// Handy functions for setup etc. Eventually automate through python
 
-//SynthDef.synthDefDir= "/Users/Lucas/Documents/sonification/synths/synthdefs/";
+//Set where synthdefs will be saved
+SynthDef.synthDefDir = "/home/lucas/Documents/BSL-sonification/lib/supercollider/synthdefs";
 
-//SynthDef.synthDefDir= "/Users/Lucas/Documents/motiongram/synthdefs/";
-
-//SynthDef.synthDefDir="/Users/Lucas/Documents/sonification_fresh/synthdefs";
-//SynthDef.synthDefDir="/Users/Lucas/Documents/spectrograms-master/sonification/synthdefs";
-
-//SynthDef.synthDefDir="/Users/Lucas/Documents/spectrograms-master/sonification/synthdefs";
-
-
-SynthDef.synthDefDir = "/home/lucas/Documents/sonification/sonification_package/synths/synthdefs";
-
-
-// SynthDef.synthDefDir="" // Include your path here
-
+//set memory allocation -- this seems to work so far for everything
 s.options.numWireBufs = 256;
 s.options.memSize = 8 * 48*1024; // in KB (4*48 MB)
 
-
-//s.options.numWireBufs = 256
-//s.options.memSize = 48 * 1024; // in KB (48 MB)
-
+// These three lines are useful on MacOS for routing to soundflower for recording
 ServerOptions.devices;
-
 Server.default.options.outDevice_("Built-in Output");
 Server.default.options.outDevice_("Soundflower (2ch)");
+
+//Chnages wont' take effect until reboot
+//If on Linux make sure supercollider is manually reconnected to PulseAudio JACK sources
 s.reboot;
 
-
-s.record(path: "/Users/Lucas/Documents/spectrograms-master/sonification/recording/test.wav".standardizePath);
-
-s.stopRecording;
-
-
+//Test tone
 {Pan2.ar(SinOsc.ar(440))}.play;
 
+//Useful bash command if having issues on linux with audio - forcekill and restart pulseaudio
 pulseaudio -k && sudo alsa force-reload

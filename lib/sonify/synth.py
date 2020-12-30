@@ -19,9 +19,9 @@ class synth:
 		Name of synthdef saved in sc.sc.synthdefpath - precompiled in supercollider
 	synthlist : list
 		for most applications we want to stack multiple synths, this list will contain them. Index 0 is the bottom of the stack
-	freqs : numpy array
+	freqs : 1-D numpy array
 		Generally used to assign attributes to vertically stacked synths in synthlist - Naming convention inherited from  Dan's spectral synthesis where freqs represented the freqency bins from the FFT.
-	bins : numpy array
+	bins : 1-D numpy array
 		Generally used as the time indicies - Naming convention inherited from Dan's sonifications, similar to freqs but for time bins	 		
 	looptime : float
 		Playback lenght for the precomputed sound
@@ -79,6 +79,33 @@ class synth:
 			self.add_synth(synthdef)
 
 
+	def get_input_device_number(self):
+		"""
+		For recording
+
+		Returns
+		-----------
+
+		input_device_number : int
+			device number corresponding to given self.audio_device name
+		"""
+		p = pyaudio.PyAudio()
+		info = p.get_host_api_info_by_index(0)
+		numdevices = info.get('deviceCount')
+
+		input_device_number = 9999
+
+		for i in range(0, numdevices):
+				device = p.get_device_info_by_host_api_device_index(0, i)
+				if device.get('maxInputChannels') > 0 and device.get('name') == self.audio_device:
+					input_device_number = int(i)
+
+		if input_device_number == 9999:
+			print (f'Input Device {self.audio_device} Not Found!')
+		else:
+			return input_device_number
+
+
 class precompute(synth):
 	""" Precompute sound and playback - useful for spectrogram/chromagram sonification. A fast way to sonify matricies, and precise with time scaling
 		but won't work for large number of timesteps (e.g., 1200) as supercollider will have memory issues, and the synthdef is a pain to write
@@ -126,7 +153,7 @@ class precompute(synth):
 
 			stream = audio.open(format=FORMAT, channels=CHANNELS,
 							rate=RATE, input=True,
-							frames_per_buffer=CHUNK, input_device_index=get_input_device_number(self.audio_device)) #
+							frames_per_buffer=CHUNK, input_device_index=self.get_input_device_number()) #
 
 			print("recording...")
 
@@ -148,7 +175,7 @@ class precompute(synth):
 			waveFile.close()
 
 			print ('done!')
-
+			self.free()
 		else:
 			self.open_gate()
 

@@ -16,5 +16,7 @@ if __name__ == '__main__':
 	freqs = np.load(data_path.joinpath('freqs.npy'))
 	bins = np.load(data_path.joinpath('bins.npy'))
 
-	synth = Pxx_blob()
-	
+	synth = Pxx_blob(Pxx_scaled,freqs,bins)
+	synth.looptime = 10
+	synth.send_spectro()
+	synth.listen(path = 'test.wav')
