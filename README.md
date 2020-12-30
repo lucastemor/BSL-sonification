@@ -2,7 +2,7 @@
 Tools for sonification of BSL data, examples, documentation
 
 Current state:
-	test_sounds.py should render sound similar to ICAD 2020 submission.
+	test_sounds.py should render sound similar to ICAD 2020 submission - working on lab linux workstation.
 
 To do (roughly temporal order):
 	- documentation for preprocessing.py
