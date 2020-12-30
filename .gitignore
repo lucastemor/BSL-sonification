@@ -130,3 +130,6 @@ dmypy.json
 
 #output videos/sounds
 output/
+
+#ignore data directory
+data/
