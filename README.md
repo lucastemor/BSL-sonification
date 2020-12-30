@@ -6,6 +6,7 @@ Current state:
 
 To do (roughly temporal order):
 	- documentation for preprocessing.py
+	- Figure out how to automate docs properly 
 	- finish other synthdefs - resynth, piched/noise only, chromagram, flat_q
 	- Make a branch of BSL and document changes, eventually merge so these packages can work together
 	- Argument specification for add_sound_to_video.py, and in general get all that working, w.r.t. path management, etc.
