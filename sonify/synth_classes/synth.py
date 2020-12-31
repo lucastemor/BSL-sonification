@@ -35,7 +35,7 @@ class synth:
 		
 		sc_path = '/Applications/SuperCollider.app/Contents/Resources/scsynth'
 		sc.sc.start(sc_path, startscsynth=0)
-		sc.sc.synthdefpath = '/home/lucas/Documents/BSL-sonification/lib/supercollider/synthdefs/' 
+		sc.sc.synthdefpath = '/home/lucas/Documents/BSL-sonification/supercollider/synthdefs/' 
 
 		self.audio_device = 'pulse' #'Soundflower (2ch)' --> for mac
 		self.synthdef = None
@@ -85,7 +85,6 @@ class synth:
 
 		Returns
 		-----------
-
 		input_device_number : int
 			device number corresponding to given self.audio_device name
 		"""

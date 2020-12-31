@@ -1,7 +1,7 @@
 // Handy functions for setup etc. Eventually automate through python
 
 //Set where synthdefs will be saved
-SynthDef.synthDefDir = "/home/lucas/Documents/BSL-sonification/lib/supercollider/synthdefs";
+SynthDef.synthDefDir = "/home/lucas/Documents/BSL-sonification/supercollider/synthdefs";
 
 //set memory allocation -- this seems to work so far for everything
 s.options.numWireBufs = 256;

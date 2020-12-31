@@ -5,7 +5,7 @@ Each class inherits synth.precompute or synth.realtime depending on how data is 
 """
 
 from . import synth
-from .. import preprocessing
+from sonify.tools import preprocessing
 
 import numpy as np
 

@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='sonification',
+    name='BSLsonification',
     version='0.1dev',
-    packages=['scosc','scsynth','sc',],
+    packages= ['sonify'] ,
     # long_description=open('README.txt').read(),
-)
+)	

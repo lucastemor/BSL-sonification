@@ -3,7 +3,7 @@ Mostly for developement -- load a sample case and sonify using different techniq
 Eventually this can become an example or useful for wrapping everything
 """
 
-from lib.sonify.python_synthdefs import Pxx_blob
+from sonify.synth_classes.python_synthdefs import Pxx_blob
 from pathlib import Path
 import numpy as np
 

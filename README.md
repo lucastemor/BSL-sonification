@@ -5,9 +5,8 @@ Current state:
 	test_sounds.py should render sound similar to ICAD 2020 submission - working on lab linux workstation.
 
 
+<b>To do (roughly temporal order):</b>
 <ul>
-To do (roughly temporal order):
-
 <li>documentation for preprocessing.py (DONE)</li>
 <li>Figure out how to automate docs properly </li>
 <li>finish other synthdefs - resynth, piched/noise only, chromagram, flat_q</li>
@@ -17,12 +16,13 @@ To do (roughly temporal order):
 <li>debugging tools</li>
 <li>Clean and cross platform install instructions</li>
 <li>Tutorial/examples plus descriptions of common naming confentions (e.g., Pxx, freqs, etc)</li>
-
 </ul>
 
+
+<b>Install  instructions (just taking notes so I can remember everything that has to be done):</b>
 <ul>
-Install  instructions (just taking notes so I can remember everything that has to be done):
-<li>pip install -e lib/supercollider/.  for sc library</li>
+<li>pip install -e BSL-sonification/supercollider/.  for sc-pytohn library</li>
+<li>pip install -e BSL-sonification/. for sonification library</li>
 <li>synth class -> set synthdef path and sc path</li>
 <li>choose sound device</li>
 <li>handy.scd setup</li>
