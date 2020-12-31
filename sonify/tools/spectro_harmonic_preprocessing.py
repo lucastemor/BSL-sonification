@@ -1,5 +1,6 @@
 """
-Utilities for preprocessing data before it is sent to supercolider. Feature detection and assigning variables for sonification
+Utilities for preprocessing harmonics extraxcted from spectrograms data before it is sent to supercolider. 
+Feature detection, and assignment of pitches to detected haronic bands
 
 Notes
 -----------------

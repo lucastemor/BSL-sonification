@@ -5,8 +5,7 @@ Each class inherits synth.precompute or synth.realtime depending on how data is 
 """
 
 from . import synth
-from sonify.tools import preprocessing
-
+from sonify.tools.spectro_harmonic_preprocessing import get_Pxx_blob_features
 import numpy as np
 
 class Pxx_blob(synth.precompute):
@@ -65,7 +64,7 @@ class Pxx_blob(synth.precompute):
 		Detect features and send the matricies to supercollider
 		Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
 		"""
-		self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  preprocessing.get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+		self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
 
 		freqs = self.freqs.tolist()
 		cut_row = self.noise.tolist()
