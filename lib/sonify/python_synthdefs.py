@@ -74,8 +74,8 @@ class Pxx_blob(synth.precompute):
 		for idx,syn in enumerate(self.synthlist):
 			if idx < self.freqs.shape[0]:
 				pxx_row = self.relativePeakHeight[idx].tolist()
-				act_row = self.active[idx].tolist() #which harmonics are active
-				pitch_row = self.pitches[idx].tolist() #pitch of active harmonics
+				act_row = self.active[idx].tolist() 				#which harmonics are active
+				pitch_row = self.pitches[idx].tolist() 				#pitch of active harmonics
 				syn.timestretch = self.looptime
 
 				param_names 	= ['cut_','pxx_','act_','ph_']

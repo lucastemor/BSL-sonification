@@ -130,7 +130,7 @@ class precompute(synth):
 			s.gate = 0.0
 
 	def listen(self,path=None):
-		"""Open the gate to playback the sound. If a path is specified, a .wav recording will also be saved
+		"""Open the gate to playback the sound. If a path is specified, a .wav recording will also be saved.
 
 		Parameters
 		---------------
@@ -153,7 +153,7 @@ class precompute(synth):
 
 			stream = audio.open(format=FORMAT, channels=CHANNELS,
 							rate=RATE, input=True,
-							frames_per_buffer=CHUNK, input_device_index=self.get_input_device_number()) #
+							frames_per_buffer=CHUNK, input_device_index=self.get_input_device_number())
 
 			print("recording...")
 
