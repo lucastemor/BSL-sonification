@@ -4,18 +4,26 @@ Tools for sonification of BSL data, examples, documentation
 Current state:
 	test_sounds.py should render sound similar to ICAD 2020 submission - working on lab linux workstation.
 
-To do (roughly temporal order):
-	- documentation for preprocessing.py
-	- Figure out how to automate docs properly 
-	- finish other synthdefs - resynth, piched/noise only, chromagram, flat_q
-	- Make a branch of BSL and document changes, eventually merge so these packages can work together
-	- Argument specification for add_sound_to_video.py, and in general get all that working, w.r.t. path management, etc.
-	- Utility to bulk compute flat q etc.
-	- debugging tools
-	- Clean and cross platform install instructions
 
+<ul>
+To do (roughly temporal order):
+
+<li>documentation for preprocessing.py (DONE)</li>
+<li>Figure out how to automate docs properly </li>
+<li>finish other synthdefs - resynth, piched/noise only, chromagram, flat_q</li>
+<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
+<li>Argument specification for add_sound_to_video.py, and in general get all that working, w.r.t. path management, etc.</li>
+<li>Utility to bulk compute flat q etc.</li>
+<li>debugging tools</li>
+<li>Clean and cross platform install instructions</li>
+<li>Tutorial/examples plus descriptions of common naming confentions (e.g., Pxx, freqs, etc)</li>
+
+</ul>
+
+<ul>
 Install  instructions (just taking notes so I can remember everything that has to be done):
-	- pip install -e lib/supercollider/.  for sc library
-	- synth class -> set synthdef path and sc path
-	- choose sound device
-	- handy.scd setup
+<li>pip install -e lib/supercollider/.  for sc library</li>
+<li>synth class -> set synthdef path and sc path</li>
+<li>choose sound device</li>
+<li>handy.scd setup</li>
+</ul>
