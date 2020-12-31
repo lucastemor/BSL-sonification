@@ -1,10 +1,11 @@
 """
 
 Main class for sonification -- all sonification mappings (e.g., flat_q, resynth, etc) will inherit this class
+These classes aren't really used directly, just parent classes for the classes in python_synthdefs.py
 
 """
 
-import sc,pyaudio,wave
+import sc,pyaudio,wave,time
 import numpy as np
 
 class synth:
@@ -79,6 +80,22 @@ class synth:
 			self.add_synth(synthdef)
 
 
+	def free(self, kill_servers=False):
+		"""
+		Free all synths on the supercollider server - this is the same as pressing ctrl+. in supercollider
+
+		Parameters
+		-------------
+
+		kill_servers : bool
+			If true, will shutdown the server after nodes are freed 
+		"""
+		for each in self.synthlist:
+			each.free()
+
+		if kill_servers:
+			sc.kill_servers()
+
 	def get_input_device_number(self):
 		"""
 		For recording
@@ -106,15 +123,18 @@ class synth:
 
 
 class precompute(synth):
-	""" Precompute sound and playback - useful for spectrogram/chromagram sonification. A fast way to sonify matricies, and precise with time scaling
-		but won't work for large number of timesteps (e.g., 1200) as supercollider will have memory issues, and the synthdef is a pain to write
+	""" Precompute sound and playback - useful for spectrogram/chromagram sonification.
+		Can quickly repeat sounds by toggling gate open/close
+		A fast way to sonify matricies, and precise with time scaling
+		but won't work for large number of timesteps (e.g., 1200) as supercollider will have memory issues,
+		and the synthdef is a pain to write.
 
 		Important to stick to naming conventions here (e.g., timestretch, freqshift, fr_000) when writing synthdef in supercollider
 	"""
 
 	def open_gate(self):
 		"""
-		Begin playback after the sounf has been precomputed
+		Begin playback after the sound has been precomputed
 		"""
 		for s in self.synthlist:
 			s.gate = 1.0
@@ -178,18 +198,69 @@ class precompute(synth):
 		else:
 			self.open_gate()
 
-	def free(self, kill_servers=False):
+
+
+
+class realtime(synth):
+	"""Docs
+
+	its more pseudo realtime -- because assumes precomputed on client (python) side
+	maybe there is a way to mnake it flexible to also just get realtime datastream from python
+	though this isn't reall useful? 
+	"""
+	def listen(self,path=None):
 		"""
-		Free all synths on the supercollider server - this is the same as pressing ctrl+. in supercollider
+		Very similar to precompute.listen but the realtime playback and recording have to
+		update simultaneously - this means that we can't just open a gate as with precompute.listen,
+		rather we need to keep track of recording chunks and send new data to supercollider simultaneously 
+		In future can probably offload some repeated code to main synth class
 
-		Parameters
-		-------------
-
-		kill_servers : bool
-			If true, will shutdown the server after nodes are freed 
+		Important: the self.send_to_sc function is defined at the lowest class lecel (i.e., in python_synthdefs.py)
+		as each synthdef will send different data in diffrent ways
 		"""
-		for each in self.synthlist:
-			each.free()
 
-		if kill_servers:
-			sc.kill_servers()
+		if self.synthlist == []:
+			self.synthlist = self.generate_synthlist()
+	
+		if path!= None:
+			FORMAT = pyaudio.paInt16
+			CHANNELS = 2
+			CHUNK = 1024
+			RATE = 44100
+			RECORD_SECONDS = self.looptime
+			WAVE_OUTPUT_FILENAME = str(path)
+
+			audio = pyaudio.PyAudio()
+
+			stream = audio.open(format=FORMAT, channels=CHANNELS,
+							rate=RATE, input=True,
+							frames_per_buffer=CHUNK, input_device_index=self.get_input_device_number())
+
+			print("recording...")
+
+			frames=[]
+			
+			for timestep in range(self.n_timesteps):
+				self.send_to_sc(timestep=timestep) 	# this is a function unique to each synthdef
+				data = stream.read(CHUNK)
+				frames.append(data)
+
+				time.sleep(0.01) #not 100% sure about this yet -- how to control timing 
+
+			stream.stop_stream()
+			stream.close()
+			audio.terminate()
+
+			self.free()
+
+			waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+			waveFile.setnchannels(CHANNELS)
+			waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+			waveFile.setframerate(RATE)
+			waveFile.writeframes(b''.join(frames))
+			waveFile.close()
+
+			print ('done!')
+			self.free()
+		else:
+			self.open_gate()

@@ -2535,7 +2535,7 @@ SynthDef(\flat_qcr, {
 
 
 (
-SynthDef(\flat_q, {
+SynthDef(\flat_q_with_env, {
 	arg
 	q = 1,
 	r= 0.0001,

@@ -135,4 +135,4 @@ output/
 data/
 
 #testiing recording files 
-test.wav
+examples/*.wav

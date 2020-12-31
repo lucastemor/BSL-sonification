@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>sonify.synth_classes.python_synthdefs API documentation</title>
-<meta name="description" content="Classes for different synthdefs - this is where new sounds will be added
-Each class inherits synth.precompute or synth.realtime depending on how data …" />
+<meta name="description" content="Classes for different synthdefs - this is where new classes will be added to interface with precompiled synthdefs made in supercollider
+Each class …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -23,21 +23,20 @@ Each class inherits synth.precompute or synth.realtime depending on how data …
 <h1 class="title">Module <code>sonify.synth_classes.python_synthdefs</code></h1>
 </header>
 <section id="section-intro">
-<p>Classes for different synthdefs - this is where new sounds will be added
+<p>Classes for different synthdefs - this is where new classes will be added to interface with precompiled synthdefs made in supercollider
 Each class inherits synth.precompute or synth.realtime depending on how data is sent to sc and how the synthdef is written (see synth.py documentation for more info)</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-Classes for different synthdefs - this is where new sounds will be added
+Classes for different synthdefs - this is where new classes will be added to interface with precompiled synthdefs made in supercollider 
 Each class inherits synth.precompute or synth.realtime depending on how data is sent to sc and how the synthdef is written (see synth.py documentation for more info)
 
 &#34;&#34;&#34;
 
 from . import synth
-from sonify.tools import preprocessing
-
+from sonify.tools.spectro_harmonic_preprocessing import get_Pxx_blob_features
 import numpy as np
 
 class Pxx_blob(synth.precompute):
@@ -76,13 +75,13 @@ class Pxx_blob(synth.precompute):
                 Height of detected spectrogram bands with respect to overall power falloff. Used to control panning in synthdef
         &#34;&#34;&#34;
 
-        def __init__(self, Pxx, freqs, bins):
+        def __init__(self, pxx, freqs, bins):
                 super().__init__()
                 self.synthdef = &#39;Pxx_blob&#39;
                 self.freqs = freqs
                 self.bins  = bins
 
-                self.pxx = Pxx
+                self.pxx = pxx
                 self.active = None
                 self.noise = None
                 self.pitches = None
@@ -91,12 +90,12 @@ class Pxx_blob(synth.precompute):
 
                 self.generate_synthlist()
 
-        def send_spectro(self):
+        def send_to_sc(self):
                 &#34;&#34;&#34;
                 Detect features and send the matricies to supercollider
                 Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
                 &#34;&#34;&#34;
-                self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  preprocessing.get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+                self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
 
                 freqs = self.freqs.tolist()
                 cut_row = self.noise.tolist()
@@ -120,7 +119,53 @@ class Pxx_blob(synth.precompute):
                         for param_name,param_value in zip(param_names,param_values): #this loop replaces the hardcoding of each time bin. This is where we set the class attributes on the sc server
                                 names = [f&#39;{param_name}{str(step).zfill(3)}&#39; for step in range(n_bins)]
                                 for name,value in zip(names,param_value):
-                                        syn.__setattr__(name,value)</code></pre>
+                                        syn.__setattr__(name,value)
+
+
+class flat_q_with_spectro_env(synth.realtime):
+
+        def __init__(self,q_array,r_array,pxx,bins,freqs):
+                super().__init__()
+                self.synthdef = &#39;flat_q_with_spectro_env&#39;
+
+                self.q_array = q_array
+                self.r_array = r_array
+                
+                self.pxx = pxx
+                self.bins = bins
+
+                self.n_positions = q_array.shape[0]
+                
+                positions = np.linspace(0,1,int(self.n_positions/2) + 1) #temp variable
+                self.positions = np.append(positions,-1*np.flip(positions[1:-1]))
+
+                self.n_timesteps = q_array.shape[1]
+
+                _, self.envelope,_,_,_ = get_Pxx_blob_features(self.pxx.copy(),freqs) #this is probably an uncessary bottleneck - just compute envelope directly in future
+
+                #rescale and interpolate cutoff frequency envelope over all video frames
+                self.envelope /=2
+                self.interp_envelope = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,self.envelope)
+
+                #just to maintain naming convention - needed for synthlist generation.. sor for the confusion 
+                self.freqs = np.zeros(self.n_positions)
+                
+                self.generate_synthlist()
+
+                #this doesn&#39;t need to be updated in realtime, only computed once, so we&#39;ll do it here
+                for each in range (self.n_positions):
+                        self.synthlist[each].theta = float(self.positions[each])
+
+        def send_to_sc(self,timestep):
+                &#34;&#34;&#34;
+                Unlike precompute - this is called multiple times in the loop as recording progresess. 
+                Done for each step in range self.n_timesteps -&gt; see synth.realtime for more
+                Assumes all computed on python client side
+                &#34;&#34;&#34;
+                for position,syn in enumerate(self.synthlist):
+                        syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+                        syn.r = float(self.r_array[position][timestep])
+                        syn.e = float(self.interp_envelope[timestep])</code></pre>
 </details>
 </section>
 <section>
@@ -134,7 +179,7 @@ class Pxx_blob(synth.precompute):
 <dl>
 <dt id="sonify.synth_classes.python_synthdefs.Pxx_blob"><code class="flex name class">
 <span>class <span class="ident">Pxx_blob</span></span>
-<span>(</span><span>Pxx, freqs, bins)</span>
+<span>(</span><span>pxx, freqs, bins)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Feature based spectrogram sonification. Synth similar to what was submitted to cancelled ICAD 2020.
@@ -201,13 +246,13 @@ Spectrogram envelop extracted and sonified using noise sweep</p>
                 Height of detected spectrogram bands with respect to overall power falloff. Used to control panning in synthdef
         &#34;&#34;&#34;
 
-        def __init__(self, Pxx, freqs, bins):
+        def __init__(self, pxx, freqs, bins):
                 super().__init__()
                 self.synthdef = &#39;Pxx_blob&#39;
                 self.freqs = freqs
                 self.bins  = bins
 
-                self.pxx = Pxx
+                self.pxx = pxx
                 self.active = None
                 self.noise = None
                 self.pitches = None
@@ -216,12 +261,12 @@ Spectrogram envelop extracted and sonified using noise sweep</p>
 
                 self.generate_synthlist()
 
-        def send_spectro(self):
+        def send_to_sc(self):
                 &#34;&#34;&#34;
                 Detect features and send the matricies to supercollider
                 Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
                 &#34;&#34;&#34;
-                self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  preprocessing.get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+                self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
 
                 freqs = self.freqs.tolist()
                 cut_row = self.noise.tolist()
@@ -254,8 +299,8 @@ Spectrogram envelop extracted and sonified using noise sweep</p>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="sonify.synth_classes.python_synthdefs.Pxx_blob.send_spectro"><code class="name flex">
-<span>def <span class="ident">send_spectro</span></span>(<span>self)</span>
+<dt id="sonify.synth_classes.python_synthdefs.Pxx_blob.send_to_sc"><code class="name flex">
+<span>def <span class="ident">send_to_sc</span></span>(<span>self)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Detect features and send the matricies to supercollider
@@ -264,12 +309,12 @@ Important to note that you cannot iterate over numpy arrays to send to sc &ndash
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def send_spectro(self):
+<pre><code class="python">def send_to_sc(self):
         &#34;&#34;&#34;
         Detect features and send the matricies to supercollider
         Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
         &#34;&#34;&#34;
-        self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  preprocessing.get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+        self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
 
         freqs = self.freqs.tolist()
         cut_row = self.noise.tolist()
@@ -304,11 +349,114 @@ Important to note that you cannot iterate over numpy arrays to send to sc &ndash
 <li><code><a title="sonify.synth_classes.synth.precompute.add_synth" href="synth.html#sonify.synth_classes.synth.synth.add_synth">add_synth</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.append_synths" href="synth.html#sonify.synth_classes.synth.synth.append_synths">append_synths</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.close_gate" href="synth.html#sonify.synth_classes.synth.precompute.close_gate">close_gate</a></code></li>
-<li><code><a title="sonify.synth_classes.synth.precompute.free" href="synth.html#sonify.synth_classes.synth.precompute.free">free</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.precompute.free" href="synth.html#sonify.synth_classes.synth.synth.free">free</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.generate_synthlist" href="synth.html#sonify.synth_classes.synth.synth.generate_synthlist">generate_synthlist</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.get_input_device_number" href="synth.html#sonify.synth_classes.synth.synth.get_input_device_number">get_input_device_number</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.listen" href="synth.html#sonify.synth_classes.synth.precompute.listen">listen</a></code></li>
 <li><code><a title="sonify.synth_classes.synth.precompute.open_gate" href="synth.html#sonify.synth_classes.synth.precompute.open_gate">open_gate</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env"><code class="flex name class">
+<span>class <span class="ident">flat_q_with_spectro_env</span></span>
+<span>(</span><span>q_array, r_array, pxx, bins, freqs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Docs</p>
+<p>its more pseudo realtime &ndash; because assumes precomputed on client (python) side
+maybe there is a way to mnake it flexible to also just get realtime datastream from python
+though this isn't reall useful?</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class flat_q_with_spectro_env(synth.realtime):
+
+        def __init__(self,q_array,r_array,pxx,bins,freqs):
+                super().__init__()
+                self.synthdef = &#39;flat_q_with_spectro_env&#39;
+
+                self.q_array = q_array
+                self.r_array = r_array
+                
+                self.pxx = pxx
+                self.bins = bins
+
+                self.n_positions = q_array.shape[0]
+                
+                positions = np.linspace(0,1,int(self.n_positions/2) + 1) #temp variable
+                self.positions = np.append(positions,-1*np.flip(positions[1:-1]))
+
+                self.n_timesteps = q_array.shape[1]
+
+                _, self.envelope,_,_,_ = get_Pxx_blob_features(self.pxx.copy(),freqs) #this is probably an uncessary bottleneck - just compute envelope directly in future
+
+                #rescale and interpolate cutoff frequency envelope over all video frames
+                self.envelope /=2
+                self.interp_envelope = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,self.envelope)
+
+                #just to maintain naming convention - needed for synthlist generation.. sor for the confusion 
+                self.freqs = np.zeros(self.n_positions)
+                
+                self.generate_synthlist()
+
+                #this doesn&#39;t need to be updated in realtime, only computed once, so we&#39;ll do it here
+                for each in range (self.n_positions):
+                        self.synthlist[each].theta = float(self.positions[each])
+
+        def send_to_sc(self,timestep):
+                &#34;&#34;&#34;
+                Unlike precompute - this is called multiple times in the loop as recording progresess. 
+                Done for each step in range self.n_timesteps -&gt; see synth.realtime for more
+                Assumes all computed on python client side
+                &#34;&#34;&#34;
+                for position,syn in enumerate(self.synthlist):
+                        syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+                        syn.r = float(self.r_array[position][timestep])
+                        syn.e = float(self.interp_envelope[timestep])</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="sonify.synth_classes.synth.realtime" href="synth.html#sonify.synth_classes.synth.realtime">realtime</a></li>
+<li><a title="sonify.synth_classes.synth.synth" href="synth.html#sonify.synth_classes.synth.synth">synth</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env.send_to_sc"><code class="name flex">
+<span>def <span class="ident">send_to_sc</span></span>(<span>self, timestep)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Unlike precompute - this is called multiple times in the loop as recording progresess.
+Done for each step in range self.n_timesteps -&gt; see synth.realtime for more
+Assumes all computed on python client side</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_to_sc(self,timestep):
+        &#34;&#34;&#34;
+        Unlike precompute - this is called multiple times in the loop as recording progresess. 
+        Done for each step in range self.n_timesteps -&gt; see synth.realtime for more
+        Assumes all computed on python client side
+        &#34;&#34;&#34;
+        for position,syn in enumerate(self.synthlist):
+                syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+                syn.r = float(self.r_array[position][timestep])
+                syn.e = float(self.interp_envelope[timestep])</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="sonify.synth_classes.synth.realtime" href="synth.html#sonify.synth_classes.synth.realtime">realtime</a></b></code>:
+<ul class="hlist">
+<li><code><a title="sonify.synth_classes.synth.realtime.add_synth" href="synth.html#sonify.synth_classes.synth.synth.add_synth">add_synth</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.append_synths" href="synth.html#sonify.synth_classes.synth.synth.append_synths">append_synths</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.free" href="synth.html#sonify.synth_classes.synth.synth.free">free</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.generate_synthlist" href="synth.html#sonify.synth_classes.synth.synth.generate_synthlist">generate_synthlist</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.get_input_device_number" href="synth.html#sonify.synth_classes.synth.synth.get_input_device_number">get_input_device_number</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.listen" href="synth.html#sonify.synth_classes.synth.realtime.listen">listen</a></code></li>
 </ul>
 </li>
 </ul>
@@ -332,7 +480,13 @@ Important to note that you cannot iterate over numpy arrays to send to sc &ndash
 <li>
 <h4><code><a title="sonify.synth_classes.python_synthdefs.Pxx_blob" href="#sonify.synth_classes.python_synthdefs.Pxx_blob">Pxx_blob</a></code></h4>
 <ul class="">
-<li><code><a title="sonify.synth_classes.python_synthdefs.Pxx_blob.send_spectro" href="#sonify.synth_classes.python_synthdefs.Pxx_blob.send_spectro">send_spectro</a></code></li>
+<li><code><a title="sonify.synth_classes.python_synthdefs.Pxx_blob.send_to_sc" href="#sonify.synth_classes.python_synthdefs.Pxx_blob.send_to_sc">send_to_sc</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env" href="#sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env">flat_q_with_spectro_env</a></code></h4>
+<ul class="">
+<li><code><a title="sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env.send_to_sc" href="#sonify.synth_classes.python_synthdefs.flat_q_with_spectro_env.send_to_sc">send_to_sc</a></code></li>
 </ul>
 </li>
 </ul>

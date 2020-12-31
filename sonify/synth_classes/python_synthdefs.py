@@ -1,5 +1,5 @@
 """
-Classes for different synthdefs - this is where new sounds will be added
+Classes for different synthdefs - this is where new classes will be added to interface with precompiled synthdefs made in supercollider 
 Each class inherits synth.precompute or synth.realtime depending on how data is sent to sc and how the synthdef is written (see synth.py documentation for more info)
 
 """
@@ -44,13 +44,13 @@ class Pxx_blob(synth.precompute):
 		Height of detected spectrogram bands with respect to overall power falloff. Used to control panning in synthdef
 	"""
 
-	def __init__(self, Pxx, freqs, bins):
+	def __init__(self, pxx, freqs, bins):
 		super().__init__()
 		self.synthdef = 'Pxx_blob'
 		self.freqs = freqs
 		self.bins  = bins
 
-		self.pxx = Pxx
+		self.pxx = pxx
 		self.active = None
 		self.noise = None
 		self.pitches = None
@@ -59,7 +59,7 @@ class Pxx_blob(synth.precompute):
 
 		self.generate_synthlist()
 
-	def send_spectro(self):
+	def send_to_sc(self):
 		"""
 		Detect features and send the matricies to supercollider
 		Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
@@ -89,3 +89,49 @@ class Pxx_blob(synth.precompute):
 				names = [f'{param_name}{str(step).zfill(3)}' for step in range(n_bins)]
 				for name,value in zip(names,param_value):
 					syn.__setattr__(name,value)
+
+
+class flat_q_with_spectro_env(synth.realtime):
+
+	def __init__(self,q_array,r_array,pxx,bins,freqs):
+		super().__init__()
+		self.synthdef = 'flat_q_with_spectro_env'
+
+		self.q_array = q_array
+		self.r_array = r_array
+		
+		self.pxx = pxx
+		self.bins = bins
+
+		self.n_positions = q_array.shape[0]
+		
+		positions = np.linspace(0,1,int(self.n_positions/2) + 1) #temp variable
+		self.positions = np.append(positions,-1*np.flip(positions[1:-1]))
+
+		self.n_timesteps = q_array.shape[1]
+
+		_, self.envelope,_,_,_ = get_Pxx_blob_features(self.pxx.copy(),freqs) #this is probably an uncessary bottleneck - just compute envelope directly in future
+
+		#rescale and interpolate cutoff frequency envelope over all video frames
+		self.envelope /=2
+		self.interp_envelope = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,self.envelope)
+
+		#just to maintain naming convention - needed for synthlist generation.. sor for the confusion 
+		self.freqs = np.zeros(self.n_positions)
+		
+		self.generate_synthlist()
+
+		#this doesn't need to be updated in realtime, only computed once, so we'll do it here
+		for each in range (self.n_positions):
+			self.synthlist[each].theta = float(self.positions[each])
+
+	def send_to_sc(self,timestep):
+		"""
+		Unlike precompute - this is called multiple times in the loop as recording progresess. 
+		Done for each step in range self.n_timesteps -> see synth.realtime for more
+		Assumes all computed on python client side
+		"""
+		for position,syn in enumerate(self.synthlist):
+			syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+			syn.r = float(self.r_array[position][timestep])
+			syn.e = float(self.interp_envelope[timestep])
