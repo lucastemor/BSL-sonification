@@ -9,7 +9,7 @@ Current state:
 <ul>
 	<li>documentation for preprocessing.py (DONE)</li>
 	<li>Figure out how to automate docs properly (DONE) </li>
-	<li> documentation for synth, pythonsynthdefs, chromagram </li>
+	<li> documentation for synth, pythonsynthdefs, chromagram, addsoundtovideo </li>
 	<li>finish other synthdefs - resynth, piched/noise only, chromagram, (done) flat_q (done)</li>
 	<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
 	<li>get new add_sound to video working (DONE)</li>
