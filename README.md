@@ -9,8 +9,8 @@ Current state:
 <ul>
 	<li>documentation for preprocessing.py (DONE)</li>
 	<li>Figure out how to automate docs properly (DONE) </li>
-	<li> documentation for synth.realtime and python_synthdefs.flat_q_with_spectro_env </li>
-	<li>finish other synthdefs - resynth, piched/noise only, chromagram, flat_q</li>
+	<li> documentation for synth, pythonsynthdefs, chromagram </li>
+	<li>finish other synthdefs - resynth, piched/noise only, chromagram, (done) flat_q (done)</li>
 	<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
 	<li>Argument specification for add_sound_to_video.py, and in general get all that working, w.r.t. path management, etc.</li>
 	<li>Utility to bulk compute flat q etc.</li>

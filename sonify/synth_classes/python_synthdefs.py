@@ -5,8 +5,10 @@ Each class inherits synth.precompute or synth.realtime depending on how data is 
 """
 
 from . import synth
-from sonify.tools.spectro_harmonic_preprocessing import get_Pxx_blob_features
 import numpy as np
+
+from sonify.tools.spectro_harmonic_preprocessing import get_Pxx_blob_features
+from sonify.tools.chromagram import get_chromagram_features
 
 class Pxx_blob(synth.precompute):
 	"""
@@ -49,22 +51,24 @@ class Pxx_blob(synth.precompute):
 		self.synthdef = 'Pxx_blob'
 		self.freqs = freqs
 		self.bins  = bins
-
 		self.pxx = pxx
-		self.active = None
-		self.noise = None
-		self.pitches = None
-		self.labels = None
-		self.relativePeakHeight = None
+
+		self.features_computed = False
 
 		self.generate_synthlist()
+
+
+	def compute_features(self):
+		self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+		self.features_computed = True
 
 	def send_to_sc(self):
 		"""
 		Detect features and send the matricies to supercollider
 		Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
 		"""
-		self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+		if self.features_computed == False:
+			self.compute_features()
 
 		freqs = self.freqs.tolist()
 		cut_row = self.noise.tolist()
@@ -92,6 +96,10 @@ class Pxx_blob(synth.precompute):
 
 
 class flat_q_with_spectro_env(synth.realtime):
+	"""
+	Flat mapped q-criterion sonificationwith spectrogram envelope modulation.
+	synth.realtime is needed as we are working with every simulation timestep instead of a small number of time bins
+	"""
 
 	def __init__(self,q_array,r_array,pxx,bins,freqs):
 		super().__init__()
@@ -127,7 +135,8 @@ class flat_q_with_spectro_env(synth.realtime):
 
 	def send_to_sc(self,timestep):
 		"""
-		Unlike precompute - this is called multiple times in the loop as recording progresess. 
+		Unlike precompute - this is called multiple times in the loop as recording progresess.
+		During playback, this is what is called by synth.realtime (parent class) 
 		Done for each step in range self.n_timesteps -> see synth.realtime for more
 		Assumes all computed on python client side
 		"""
@@ -135,3 +144,53 @@ class flat_q_with_spectro_env(synth.realtime):
 			syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
 			syn.r = float(self.r_array[position][timestep])
 			syn.e = float(self.interp_envelope[timestep])
+
+
+class simple_chromagram(synth.precompute):
+	"""
+	Chromagram feature based sonification. Map detected features to a simple sine osc
+	Works only with global transposed_matrix, loaded directly
+	in future implement a class to sample 
+	"""
+
+	def __init__(self, mesh_path, df_path):
+		"""
+		Important that Pxx is not the scaled Pxx 
+		"""
+		super().__init__()
+		self.synthdef = 'simple_chromagram'
+		self.mesh_path = mesh_path
+		self.df_path = df_path
+		self.features_computed = False
+
+		self.starting_note = 261.63 #middle c, in hz
+		self.n_chroma_bins = 12 #chromatic scale, 12 pitches
+		self.freqs =  [(self.starting_note*2**(i/12)) for i in range (0,12)] #chromatic scale
+
+		self.generate_synthlist()
+
+	def compute_features(self):
+		
+		self.chroma_features, self.bins = get_chromagram_features(self.mesh_path,self.df_path,self.n_chroma_bins)
+		self.features_computed = True
+
+	def send_to_sc(self):
+		if self.features_computed == False:
+			self.compute_features()
+
+		for i, syn in enumerate(self.synthlist):
+			syn.fr_000 = self.freqs[i]
+
+			pitch_row = self.chroma_features[i].tolist()
+			param_names = ['ph_']
+			param_values = [pitch_row]
+
+			for param_name,param_value in zip(param_names,param_values): #this loop replaces the hardcoding of each time bin 
+				names = [f'{param_name}{str(step).zfill(3)}' for step in range(len(self.bins))]
+				for name,value in zip(names,param_value):
+					syn.__setattr__(name,value)
+
+
+		
+
+

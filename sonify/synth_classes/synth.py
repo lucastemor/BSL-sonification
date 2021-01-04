@@ -44,7 +44,7 @@ class synth:
 		self.freqs = None
 		self.bins = None
 
-		self.looptime= 2
+		self.looptime= 5
 
 	def add_synth(self,synthdef):
 		""" Append new synthdef to the synthlist
