@@ -5,8 +5,9 @@ These classes aren't really used directly, just parent classes for the classes i
 
 """
 
-import sc,pyaudio,wave,time
+import sc,pyaudio,wave,time,os
 import numpy as np
+from pathlib import Path
 
 class synth:
 	""" Class for general supercollider initialization. Inherited by precomputed and realtime synths
@@ -208,6 +209,17 @@ class realtime(synth):
 	maybe there is a way to mnake it flexible to also just get realtime datastream from python
 	though this isn't reall useful? 
 	"""
+
+	def rescale_audio(self,path,desired_length):
+		path = Path(path)
+		fname= str(path)
+		out = str(path.parent.joinpath(path.stem + '_rescale.wav'))
+
+		actual_length = float(os.popen(f'ffprobe -i {path} -show_entries format=duration -v quiet -of csv="p=0"').read())
+		atempo = actual_length / desired_length
+		os.system(f'ffmpeg -y -i {fname} -filter:a "atempo={atempo}" -vn {out}')
+
+
 	def listen(self,path=None):
 		"""
 		Very similar to precompute.listen but the realtime playback and recording have to
@@ -262,5 +274,11 @@ class realtime(synth):
 
 			print ('done!')
 			self.free()
+
+			self.rescale_audio(WAVE_OUTPUT_FILENAME,self.looptime)
+
 		else:
-			self.open_gate()
+			for timestep in range(self.n_timesteps):
+				self.send_to_sc(timestep=timestep)
+				time.sleep(0.01)
+			self.free() 

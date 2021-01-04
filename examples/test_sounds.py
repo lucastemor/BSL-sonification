@@ -64,9 +64,6 @@ if __name__ == '__main__':
 
 	#Uncomment this block to test flat q with spectro envelope
 	'''
-	#include this here or in class __init__  ??
-	r_array /= r_array.max()
-	q_array *= 3.5	
 
 	flat_q_test = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
 	flat_q_test.looptime = 10

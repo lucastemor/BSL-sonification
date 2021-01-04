@@ -105,6 +105,9 @@ class flat_q_with_spectro_env(synth.realtime):
 		super().__init__()
 		self.synthdef = 'flat_q_with_spectro_env'
 
+		r_array /= r_array.max()
+		q_array *= 3.5	
+
 		self.q_array = q_array
 		self.r_array = r_array
 		
