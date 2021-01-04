@@ -1,9 +1,11 @@
 # BSL-sonification
 Tools for sonification of BSL data, examples, documentation
 
-Current state:
-	test_sounds.py should render sound similar to ICAD 2020 submission - working on lab linux workstation.
-
+##Current state:
+<ul>
+	<li>Spectrogram feature, flat q, and chromagram synthdefs all working on lab linux workstation</li>
+	<li>utility to render audio and sync with video working on lab linux workstation</li>
+</ul>
 
 <b>To do (roughly temporal order):</b>
 <ul>
@@ -11,11 +13,13 @@ Current state:
 	<li>Figure out how to automate docs properly (DONE) </li>
 	<li> documentation for synth, pythonsynthdefs, chromagram, addsoundtovideo </li>
 	<li>finish other synthdefs - resynth, piched/noise only, chromagram, (done) flat_q (done)</li>
+	<li>make tool for computing an sonifying sac chromagrams, not global, as is done now</li>
+	<li>Alternatively/additionally, precompute all sac chromagrams so big matgrix doesn't have to be read every time</li>
 	<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
 	<li>get new add_sound to video working (DONE)</li>
-	<li>Utility to bulk compute flat q etc.</li>
-	<li>debugging tools</li>
-	<li>Clean and cross platform install instructions</li>
+	<li>Utility to bulk compute flat q etc. so we cna bulk compute q-sonifications for 50 cases</li>
+	<li>debugging tools - mostly w.r.t. auido device seleciton </li>
+	<li>Mac and linux cross-platform compatibility / install instructions</li>
 	<li>Tutorial/examples plus descriptions of common naming confentions (e.g., Pxx, freqs, etc)</li>
 </ul>
 

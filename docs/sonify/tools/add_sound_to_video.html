@@ -74,18 +74,45 @@ probably iwll not need to be run from commmand line in future anyways
 
 &#34;&#34;&#34;
 
-import sys, glob
+import sys, glob, os, shutil
 from pathlib import Path
+from sonify.synth_classes.python_synthdefs import *
+from matplotlib import image as mplimage
 
 
-def test():
-        &#34;&#34;&#34;
-        This is a test function and it works -- updating the docs 
-        &#34;&#34;&#34;
-        return
+def render_video_from_frames(path_to_frames,desired_length,render_name):
+        frames = list(video_path.glob(&#39;*.png&#39;))
+        fps = len(frames)/float(desired_length)
+        resolution = mplimage.imread(frames[0]).shape
+        res = f&#39;{resolution[0]}x{resolution[1]}&#39;
+        pic_name = str(video_path.joinpath(frames[0].stem[:-4])) #assumes all frames are padded with 4 zeros eg.,  my_pic.0001
+        video_path = str(path_to_frames.joinpath(f&#39;{render_name}.mp4&#39;))
+
+        os.system(f&#39;ffmpeg -r {fps} -f image2 -s {res} -i {pic_name}%04d.png -vcodec libx264 -crf 25 -vf &#34;pad=ceil(iw/2)*2:ceil(ih/2)*2&#34; -pix_fmt yuv420p {video_path}&#39;)
+
+        return video_path
+
+def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
+
+        outfile = outdir.joinpath(&#39;mix_out.wav&#39;)
+        temp_outfile = outdir.joinpath(&#39;temp_audio.wav&#39;)
+        shutil.copy(str(audio_paths[0]), str(temp_outfile))
+
+        n_audio=len(audio_paths)
+
+        for i in range(n_audio)[1:]:
+                os.system(f&#39;ffmpeg -y -i {str(temp_outfile)} -i {str(audio_paths[i])} -filter_complex amix=inputs=2:duration=longest {str(outfile)}&#39;)
+                shutil.copy(str(outfile), str(temp_outfile))
+
+        os.remove(str(temp_outfile))
+        os.system(f&#39;ffmpeg -y -i {str(video_path)} -i {str(outfile)} -map 0 -map 1 -c:a aac {str(outdir.joinpath(f&#34;{itername}_final.mp4&#34;))}&#39;)
+
 
 
 if __name__ == &#39;__main__&#39;:
+        &#34;&#34;&#34;
+        convenient way to sonify with desired synthdef and sync the sound to the video frames
+        &#34;&#34;&#34;
         
         #for quick debugging purposes, args are hardcoded if not specified.
         try:
@@ -97,18 +124,60 @@ if __name__ == &#39;__main__&#39;:
                 case = &#39;c0053&#39;
                 video_path = Path(&#39;/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053added_waveform/waveform_matrix._60fps_1stride.mp4&#39; )
                 iter_name = &#39;_testing&#39;
+                video_length = 20
+
+
+        ########### GENERAL I/O SETUP #################################################
+
+        base_path = Path(&#39;/home/lucas/Documents/BSL-sonification&#39;)
 
         render_name = f&#39;{case}_{video_path.stem}_{iter_name}&#39;
-        outdir = Path(&#39;output&#39;).joinpath(render_name)
+        outdir = base_path.joinpath(&#39;output&#39;,case,render_name)
+
         if outdir.exists() == False:
-                outdir.mkdir()
+                outdir.mkdir(parents=True)
         else:
-                n_existing = len(glob.glob(f&#39;output/*{render_name}*&#39;))
-                outdir = Path(&#39;output&#39;).joinpath(f&#39;{render_name}-{n_existing}&#39;)
+                n_existing = len(list(outdir.parent.glob(f&#39;*{render_name}*&#39;)))
+                outdir = base_path.joinpath(&#39;output&#39;,case,f&#39;{render_name}-{n_existing}&#39;)
                 outdir.mkdir(parents=True)
 
-        #get .wav file to add - if it doesn&#39;t exist, render it, else use it
-        wav_file = sonification</code></pre>
+        ########### SETTING UP VIDEO PARAMS  ##############################################################
+
+        #if a folder of frames is specified, we render the video at the given deisred lenghth, and update video_path to match the newly rendered video
+        #if a vidoe file is specified, we want to update video_length to be the same length as the given video
+        if video_path.suffix == &#39;&#39;:
+                video_path = render_video_from_frames(video_path,video_length,render_name)
+        else: 
+                video_length = float(os.popen(f&#39;ffprobe -i {video_path} -show_entries format=duration -v quiet -of csv=&#34;p=0&#34;&#39;).read())
+
+
+        ############## SONIFICATION I/O &amp; WAV RENDERING #######################################
+
+        q_array         = np.load(base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;flat_q_data&#39;,case,&#39;master_sonification_q.npy&#39;))
+        r_array         = np.load(base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;flat_q_data&#39;,case,&#39;master_sonification_r.npy&#39;))
+
+        Pxx_scaled  = np.load(base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;spectrograms&#39;,case,&#39;sac_spectro.npy&#39;))
+        bins            = np.load(base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;spectrograms&#39;,case,&#39;bins.npy&#39;))
+        freqs           = np.load(base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;spectrograms&#39;,case,&#39;freqs.npy&#39;))        
+
+
+        df_path         = base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;spectrograms&#39;,case,f&#39;{case}.h5&#39;)
+        mesh_path       = base_path.joinpath(&#39;data&#39;,&#39;aneurisk&#39;,&#39;spectrograms&#39;,case,f&#39;{case}.vtu&#39;)
+
+
+        flat_q_synth = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
+        flat_q_synth.looptime = video_length
+        flat_q_sound_file = outdir.joinpath(&#39;flat_q.wav&#39;)
+        flat_q_synth.listen(path=flat_q_sound_file)
+        flat_q_sound_file = outdir.joinpath(&#39;flat_q_rescale.wav&#39;)
+
+        chroma_synth = simple_chromagram(mesh_path,df_path)
+        chroma_synth.looptime = video_length
+        chroma_synth.send_to_sc()
+        chroma_sound_file = outdir.joinpath(&#39;chromagram_features.wav&#39;)
+        chroma_synth.listen(path=chroma_sound_file) 
+
+        add_tracks_to_video(video_path,outdir,iter_name,flat_q_sound_file,chroma_sound_file)</code></pre>
 </details>
 </section>
 <section>
@@ -118,20 +187,51 @@ if __name__ == &#39;__main__&#39;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="sonify.tools.add_sound_to_video.test"><code class="name flex">
-<span>def <span class="ident">test</span></span>(<span>)</span>
+<dt id="sonify.tools.add_sound_to_video.add_tracks_to_video"><code class="name flex">
+<span>def <span class="ident">add_tracks_to_video</span></span>(<span>video_path, outdir, itername, *audio_paths)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This is a test function and it works &ndash; updating the docs</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def test():
-        &#34;&#34;&#34;
-        This is a test function and it works -- updating the docs 
-        &#34;&#34;&#34;
-        return</code></pre>
+<pre><code class="python">def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
+
+        outfile = outdir.joinpath(&#39;mix_out.wav&#39;)
+        temp_outfile = outdir.joinpath(&#39;temp_audio.wav&#39;)
+        shutil.copy(str(audio_paths[0]), str(temp_outfile))
+
+        n_audio=len(audio_paths)
+
+        for i in range(n_audio)[1:]:
+                os.system(f&#39;ffmpeg -y -i {str(temp_outfile)} -i {str(audio_paths[i])} -filter_complex amix=inputs=2:duration=longest {str(outfile)}&#39;)
+                shutil.copy(str(outfile), str(temp_outfile))
+
+        os.remove(str(temp_outfile))
+        os.system(f&#39;ffmpeg -y -i {str(video_path)} -i {str(outfile)} -map 0 -map 1 -c:a aac {str(outdir.joinpath(f&#34;{itername}_final.mp4&#34;))}&#39;)</code></pre>
+</details>
+</dd>
+<dt id="sonify.tools.add_sound_to_video.render_video_from_frames"><code class="name flex">
+<span>def <span class="ident">render_video_from_frames</span></span>(<span>path_to_frames, desired_length, render_name)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def render_video_from_frames(path_to_frames,desired_length,render_name):
+        frames = list(video_path.glob(&#39;*.png&#39;))
+        fps = len(frames)/float(desired_length)
+        resolution = mplimage.imread(frames[0]).shape
+        res = f&#39;{resolution[0]}x{resolution[1]}&#39;
+        pic_name = str(video_path.joinpath(frames[0].stem[:-4])) #assumes all frames are padded with 4 zeros eg.,  my_pic.0001
+        video_path = str(path_to_frames.joinpath(f&#39;{render_name}.mp4&#39;))
+
+        os.system(f&#39;ffmpeg -r {fps} -f image2 -s {res} -i {pic_name}%04d.png -vcodec libx264 -crf 25 -vf &#34;pad=ceil(iw/2)*2:ceil(ih/2)*2&#34; -pix_fmt yuv420p {video_path}&#39;)
+
+        return video_path</code></pre>
 </details>
 </dd>
 </dl>
@@ -156,7 +256,8 @@ if __name__ == &#39;__main__&#39;:
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="sonify.tools.add_sound_to_video.test" href="#sonify.tools.add_sound_to_video.test">test</a></code></li>
+<li><code><a title="sonify.tools.add_sound_to_video.add_tracks_to_video" href="#sonify.tools.add_sound_to_video.add_tracks_to_video">add_tracks_to_video</a></code></li>
+<li><code><a title="sonify.tools.add_sound_to_video.render_video_from_frames" href="#sonify.tools.add_sound_to_video.render_video_from_frames">render_video_from_frames</a></code></li>
 </ul>
 </li>
 </ul>

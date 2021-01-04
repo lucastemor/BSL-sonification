@@ -36,8 +36,9 @@ These classes aren&#39;t really used directly, just parent classes for the class
 
 &#34;&#34;&#34;
 
-import sc,pyaudio,wave,time
+import sc,pyaudio,wave,time,os
 import numpy as np
+from pathlib import Path
 
 class synth:
         &#34;&#34;&#34; Class for general supercollider initialization. Inherited by precomputed and realtime synths
@@ -75,7 +76,7 @@ class synth:
                 self.freqs = None
                 self.bins = None
 
-                self.looptime= 2
+                self.looptime= 5
 
         def add_synth(self,synthdef):
                 &#34;&#34;&#34; Append new synthdef to the synthlist
@@ -239,6 +240,17 @@ class realtime(synth):
         maybe there is a way to mnake it flexible to also just get realtime datastream from python
         though this isn&#39;t reall useful? 
         &#34;&#34;&#34;
+
+        def rescale_audio(self,path,desired_length):
+                path = Path(path)
+                fname= str(path)
+                out = str(path.parent.joinpath(path.stem + &#39;_rescale.wav&#39;))
+
+                actual_length = float(os.popen(f&#39;ffprobe -i {path} -show_entries format=duration -v quiet -of csv=&#34;p=0&#34;&#39;).read())
+                atempo = actual_length / desired_length
+                os.system(f&#39;ffmpeg -y -i {fname} -filter:a &#34;atempo={atempo}&#34; -vn {out}&#39;)
+
+
         def listen(self,path=None):
                 &#34;&#34;&#34;
                 Very similar to precompute.listen but the realtime playback and recording have to
@@ -293,8 +305,14 @@ class realtime(synth):
 
                         print (&#39;done!&#39;)
                         self.free()
+
+                        self.rescale_audio(WAVE_OUTPUT_FILENAME,self.looptime)
+
                 else:
-                        self.open_gate()</code></pre>
+                        for timestep in range(self.n_timesteps):
+                                self.send_to_sc(timestep=timestep)
+                                time.sleep(0.01)
+                        self.free() </code></pre>
 </details>
 </section>
 <section>
@@ -403,6 +421,7 @@ and the synthdef is a pain to write.</p>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="sonify.synth_classes.python_synthdefs.Pxx_blob" href="python_synthdefs.html#sonify.synth_classes.python_synthdefs.Pxx_blob">Pxx_blob</a></li>
+<li><a title="sonify.synth_classes.python_synthdefs.simple_chromagram" href="python_synthdefs.html#sonify.synth_classes.python_synthdefs.simple_chromagram">simple_chromagram</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -540,6 +559,17 @@ though this isn't reall useful?</p></div>
         maybe there is a way to mnake it flexible to also just get realtime datastream from python
         though this isn&#39;t reall useful? 
         &#34;&#34;&#34;
+
+        def rescale_audio(self,path,desired_length):
+                path = Path(path)
+                fname= str(path)
+                out = str(path.parent.joinpath(path.stem + &#39;_rescale.wav&#39;))
+
+                actual_length = float(os.popen(f&#39;ffprobe -i {path} -show_entries format=duration -v quiet -of csv=&#34;p=0&#34;&#39;).read())
+                atempo = actual_length / desired_length
+                os.system(f&#39;ffmpeg -y -i {fname} -filter:a &#34;atempo={atempo}&#34; -vn {out}&#39;)
+
+
         def listen(self,path=None):
                 &#34;&#34;&#34;
                 Very similar to precompute.listen but the realtime playback and recording have to
@@ -594,8 +624,14 @@ though this isn't reall useful?</p></div>
 
                         print (&#39;done!&#39;)
                         self.free()
+
+                        self.rescale_audio(WAVE_OUTPUT_FILENAME,self.looptime)
+
                 else:
-                        self.open_gate()</code></pre>
+                        for timestep in range(self.n_timesteps):
+                                self.send_to_sc(timestep=timestep)
+                                time.sleep(0.01)
+                        self.free() </code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -675,8 +711,33 @@ as each synthdef will send different data in diffrent ways</p></div>
 
                 print (&#39;done!&#39;)
                 self.free()
+
+                self.rescale_audio(WAVE_OUTPUT_FILENAME,self.looptime)
+
         else:
-                self.open_gate()</code></pre>
+                for timestep in range(self.n_timesteps):
+                        self.send_to_sc(timestep=timestep)
+                        time.sleep(0.01)
+                self.free() </code></pre>
+</details>
+</dd>
+<dt id="sonify.synth_classes.synth.realtime.rescale_audio"><code class="name flex">
+<span>def <span class="ident">rescale_audio</span></span>(<span>self, path, desired_length)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rescale_audio(self,path,desired_length):
+        path = Path(path)
+        fname= str(path)
+        out = str(path.parent.joinpath(path.stem + &#39;_rescale.wav&#39;))
+
+        actual_length = float(os.popen(f&#39;ffprobe -i {path} -show_entries format=duration -v quiet -of csv=&#34;p=0&#34;&#39;).read())
+        atempo = actual_length / desired_length
+        os.system(f&#39;ffmpeg -y -i {fname} -filter:a &#34;atempo={atempo}&#34; -vn {out}&#39;)</code></pre>
 </details>
 </dd>
 </dl>
@@ -754,7 +815,7 @@ Dan's spectral synthesis where freqs represented the freqency bins from the FFT.
                 self.freqs = None
                 self.bins = None
 
-                self.looptime= 2
+                self.looptime= 5
 
         def add_synth(self,synthdef):
                 &#34;&#34;&#34; Append new synthdef to the synthlist
@@ -1012,6 +1073,7 @@ Dan's spectral synthesis where freqs represented the freqency bins from the FFT.
 <h4><code><a title="sonify.synth_classes.synth.realtime" href="#sonify.synth_classes.synth.realtime">realtime</a></code></h4>
 <ul class="">
 <li><code><a title="sonify.synth_classes.synth.realtime.listen" href="#sonify.synth_classes.synth.realtime.listen">listen</a></code></li>
+<li><code><a title="sonify.synth_classes.synth.realtime.rescale_audio" href="#sonify.synth_classes.synth.realtime.rescale_audio">rescale_audio</a></code></li>
 </ul>
 </li>
 <li>

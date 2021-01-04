@@ -61,6 +61,9 @@ def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
 
 
 if __name__ == '__main__':
+	"""
+	convenient way to sonify with desired synthdef and sync the sound to the video frames
+	"""
 	
 	#for quick debugging purposes, args are hardcoded if not specified.
 	try:
