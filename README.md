@@ -12,7 +12,7 @@ Current state:
 	<li> documentation for synth, pythonsynthdefs, chromagram </li>
 	<li>finish other synthdefs - resynth, piched/noise only, chromagram, (done) flat_q (done)</li>
 	<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
-	<li>Argument specification for add_sound_to_video.py, and in general get all that working, w.r.t. path management, etc.</li>
+	<li>get new add_sound to video working (DONE)</li>
 	<li>Utility to bulk compute flat q etc.</li>
 	<li>debugging tools</li>
 	<li>Clean and cross platform install instructions</li>
@@ -20,8 +20,9 @@ Current state:
 </ul>
 
 
-<b>To do longer term:</b>
+<b>To do lower priority:</b>
 <ul>
+	<li>Ckeaner argument specification for add_sound_to_video.py</li>
 	<li>clean up spectroharmonic_preprocessing.py</li>
 	<li>clean up flat_q_with_spectro_env.py</li>
 </ul>
