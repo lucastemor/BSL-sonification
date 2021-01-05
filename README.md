@@ -1,7 +1,7 @@
 # BSL-sonification
 Tools for sonification of BSL data, examples, documentation
 
-##Current state:
+## Current state:
 <ul>
 	<li>Spectrogram feature, flat q, and chromagram synthdefs all working on lab linux workstation</li>
 	<li>utility to render audio and sync with video working on lab linux workstation</li>

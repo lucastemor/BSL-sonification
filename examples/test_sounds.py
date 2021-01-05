@@ -53,6 +53,8 @@ if __name__ == '__main__':
 	q_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_q.npy')
 	r_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_r.npy')
 
+	chromagram_filtered   = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/full_model/filt_chroma.npy')
+	chromagram_unfiltered = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/full_model/unfilt_chroma.npy')
 
 	#Uncomment this block to test Pxx_blob
 	'''
@@ -76,9 +78,8 @@ if __name__ == '__main__':
 	#must be unscaled, and unfiltered
 	#Pxx_ave, freqs, bins = get_unscaled_spectro(data_path)
 	
-	mesh_path = '/home/lucas/Documents/sonification/spectrograms-master/data/c0053/c0053.vtu'
-	df_path = '/home/lucas/Documents/sonification/spectrograms-master/data/c0053/c0053.h5'
-	synth = simple_chromagram(mesh_path,df_path)
+
+	synth = simple_chromagram(chromagram_filtered,chromagram_unfiltered)
 	synth.looptime = 5
 	synth.send_to_sc()
 	synth.listen() 

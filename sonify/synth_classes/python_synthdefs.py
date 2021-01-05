@@ -156,25 +156,24 @@ class simple_chromagram(synth.precompute):
 	in future implement a class to sample 
 	"""
 
-	def __init__(self, mesh_path, df_path):
+	def __init__(self, chromagram_filtered, chromagram_unfiltered):
 		"""
 		Important that Pxx is not the scaled Pxx 
 		"""
 		super().__init__()
 		self.synthdef = 'simple_chromagram'
-		self.mesh_path = mesh_path
-		self.df_path = df_path
+		self.chromagram_filtered   = chromagram_filtered
+		self.chromagram_unfiltered = chromagram_unfiltered
 		self.features_computed = False
 
 		self.starting_note = 261.63 #middle c, in hz
 		self.n_chroma_bins = 12 #chromatic scale, 12 pitches
-		self.freqs =  [(self.starting_note*2**(i/12)) for i in range (0,12)] #chromatic scale
+		self.freqs =  [(self.starting_note*2**(i/self.n_chroma_bins)) for i in range (0,self.n_chroma_bins)] #limited to 1 octave
 
 		self.generate_synthlist()
 
 	def compute_features(self):
-		
-		self.chroma_features, self.bins = get_chromagram_features(self.mesh_path,self.df_path,self.n_chroma_bins)
+		self.chroma_features = get_chromagram_features(self.chromagram_filtered,self.chromagram_unfiltered)
 		self.features_computed = True
 
 	def send_to_sc(self):
@@ -189,7 +188,7 @@ class simple_chromagram(synth.precompute):
 			param_values = [pitch_row]
 
 			for param_name,param_value in zip(param_names,param_values): #this loop replaces the hardcoding of each time bin 
-				names = [f'{param_name}{str(step).zfill(3)}' for step in range(len(self.bins))]
+				names = [f'{param_name}{str(step).zfill(3)}' for step in range(self.chromagram_filtered.shape[1])]
 				for name,value in zip(names,param_value):
 					syn.__setattr__(name,value)
 
