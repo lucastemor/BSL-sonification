@@ -2535,7 +2535,7 @@ SynthDef(\flat_qcr, {
 
 
 (
-SynthDef(\flat_q_with_env, {
+SynthDef(\flat_q_with_spectro_env, {
 	arg
 	q = 1,
 	r= 0.0001,
@@ -2550,7 +2550,7 @@ SynthDef(\flat_q_with_env, {
 	car = BrownNoise.ar(1,0);
 	mod = BrownNoise.ar(1,0);
 
-	sig = RLPF.ar(car,(q+mod+15),((1/(r*1000))+0.5),(4/(r*100)).poll,0) +
+	sig = RLPF.ar(car,(q+mod+15),((1/(r*1000))+0.5),(3/(r*100)).poll,0) +
 	      RLPF.ar(car,(e+mod),((1/(r*1000))+0.5),1,0) ;
 	#w, x, y = PanB2.ar(sig, theta, 1);
 

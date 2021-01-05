@@ -67,24 +67,19 @@ if __name__ == '__main__':
 	'''
 
 	#Uncomment this block to test flat q with spectro envelope
-	'''
 
 	flat_q_test = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
 	flat_q_test.looptime = 10
 	#we don't need to call send for realtime - the listen method will do this automatically
 	flat_q_test.listen(path='flat_q_test.wav')
+
+	#uncomment to test simple chromagram
 	'''
-
-	
-	#Uncomment this block to test simple chromagram
-	#must be unscaled, and unfiltered
-	#Pxx_ave, freqs, bins = get_unscaled_spectro(data_path)
-	
-
 	synth = simple_chromagram(chromagram_filtered,chromagram_unfiltered)
 	synth.looptime = 5
 	synth.send_to_sc()
 	synth.listen() 
+	'''
 
 	'''
 	fig, ax = plt.subplots(3,1,figsize=(5,10))

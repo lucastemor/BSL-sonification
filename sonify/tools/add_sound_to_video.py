@@ -56,7 +56,7 @@ def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
 		shutil.copy(str(outfile), str(temp_outfile))
 
 	os.remove(str(temp_outfile))
-	os.system(f'ffmpeg -y -i {str(video_path)} -i {str(outfile)} -map 0 -map 1 -c:a aac {str(outdir.joinpath(f"{itername}_final.mp4"))}')
+	os.system(f'ffmpeg -y -i {str(video_path)} -i {str(outfile)} -filter:a "volume=2" -map 0 -map 1 -c:a aac {str(outdir.joinpath(f"{itername}_final.mp4"))}')
 
 
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 	except:
 		case = 'c0053'
 		video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053added_waveform/waveform_matrix._60fps_1stride.mp4' )
-		iter_name = '_testing'
+		iter_name = '_testing_sac_avg_'
 		video_length = 20
 
 
@@ -107,13 +107,13 @@ if __name__ == '__main__':
 	q_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_q.npy'))
 	r_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_r.npy'))
 
-	Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_spectro.npy'))
-	bins 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'bins.npy'))
-	freqs 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'freqs.npy'))	
+	Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','sac_spectro_filtered_scaled.npy'))
+	bins 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','bins.npy'))
+	freqs 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','freqs.npy'))	
 
 
-	df_path		= base_path.joinpath('data','aneurisk','spectrograms',case,f'{case}.h5')
-	mesh_path 	= base_path.joinpath('data','aneurisk','spectrograms',case,f'{case}.vtu')
+	filtered_chromagram		= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','filt_chroma.npy'))
+	unfiltered_chromagram 	= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','unfilt_chroma.npy'))
 
 
 	flat_q_synth = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 	flat_q_synth.listen(path=flat_q_sound_file)
 	flat_q_sound_file = outdir.joinpath('flat_q_rescale.wav')
 
-	chroma_synth = simple_chromagram(mesh_path,df_path)
+	chroma_synth = simple_chromagram(filtered_chromagram,unfiltered_chromagram)
 	chroma_synth.looptime = video_length
 	chroma_synth.send_to_sc()
 	chroma_sound_file = outdir.joinpath('chromagram_features.wav')
