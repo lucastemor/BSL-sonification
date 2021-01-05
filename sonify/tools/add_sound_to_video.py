@@ -72,9 +72,13 @@ if __name__ == '__main__':
 		video_length = sys.argv[3]
 		iter_name 	 = sys.argv[4] #note to set to '' if none passed
 	except:
-		case = 'c0053'
-		video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053added_waveform/waveform_matrix._60fps_1stride.mp4' )
-		iter_name = '_testing_sac_avg_'
+		#case = 'c0053'
+		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053added_waveform/waveform_matrix._60fps_1stride.mp4' )
+		
+		case = 'c0004'
+		video_path = 
+
+		iter_name = '_testing_timbral'
 		video_length = 20
 
 
@@ -122,7 +126,7 @@ if __name__ == '__main__':
 	flat_q_synth.listen(path=flat_q_sound_file)
 	flat_q_sound_file = outdir.joinpath('flat_q_rescale.wav')
 
-	chroma_synth = simple_chromagram(filtered_chromagram,unfiltered_chromagram)
+	chroma_synth = timbral_chromagram('four_osc_chromagram',filtered_chromagram,unfiltered_chromagram)
 	chroma_synth.looptime = video_length
 	chroma_synth.send_to_sc()
 	chroma_sound_file = outdir.joinpath('chromagram_features.wav')

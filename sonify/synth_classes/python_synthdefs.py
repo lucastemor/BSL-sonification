@@ -193,6 +193,45 @@ class simple_chromagram(synth.precompute):
 					syn.__setattr__(name,value)
 
 
-		
+class timbral_chromagram(synth.precompute):
+	"""
+	Chromagram feature based sonification. Map detected features to a simple sine osc
+	Works only with global transposed_matrix, loaded directly
+	in future implement a class to sample 
+	"""
 
+	def __init__(self, timbre_synthdef, chromagram_filtered, chromagram_unfiltered):
+		"""
+		Important that Pxx is not the scaled Pxx 
+		"""
+		super().__init__()
+		self.synthdef = timbre_synthdef
+		self.chromagram_filtered   = chromagram_filtered
+		self.chromagram_unfiltered = chromagram_unfiltered
+		self.features_computed = False
 
+		self.starting_note = 261.63 #middle c, in hz
+		self.n_chroma_bins = 12 #chromatic scale, 12 pitches
+		self.freqs =  [(self.starting_note*2**(i/self.n_chroma_bins)) for i in range (0,self.n_chroma_bins)] #limited to 1 octave
+
+		self.generate_synthlist()
+
+	def compute_features(self):
+		self.chroma_features = get_chromagram_features(self.chromagram_filtered,self.chromagram_unfiltered)
+		self.features_computed = True
+
+	def send_to_sc(self):
+		if self.features_computed == False:
+			self.compute_features()
+
+		for i, syn in enumerate(self.synthlist):
+			syn.fr_000 = self.freqs[i]
+
+			pitch_row = self.chroma_features[i].tolist()
+			param_names = ['ph_']
+			param_values = [pitch_row]
+
+			for param_name,param_value in zip(param_names,param_values): #this loop replaces the hardcoding of each time bin 
+				names = [f'{param_name}{str(step).zfill(3)}' for step in range(self.chromagram_filtered.shape[1])]
+				for name,value in zip(names,param_value):
+					syn.__setattr__(name,value)
