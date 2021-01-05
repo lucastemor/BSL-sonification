@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import bsl
 
+import matplotlib.pyplot as plt
+
 def get_unscaled_spectro(path,filtered=False,sample_density = 0.4):
 	"""
 	Load unscaled average spectrogram
@@ -53,8 +55,8 @@ if __name__ == '__main__':
 	q_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_q.npy')
 	r_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_r.npy')
 
-	chromagram_filtered   = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/full_model/filt_chroma.npy')
-	chromagram_unfiltered = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/full_model/unfilt_chroma.npy')
+	chromagram_filtered   = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/sac/filt_chroma.npy')
+	chromagram_unfiltered = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/sac/unfilt_chroma.npy')
 
 	#Uncomment this block to test Pxx_blob
 	'''
@@ -83,3 +85,14 @@ if __name__ == '__main__':
 	synth.looptime = 5
 	synth.send_to_sc()
 	synth.listen() 
+
+	'''
+	fig, ax = plt.subplots(3,1,figsize=(5,10))
+
+
+	ax[0].pcolormesh(synth.chromagram_unfiltered,shading='auto',vmin=0,vmax=1)
+	ax[1].pcolormesh(synth.chromagram_filtered,shading='auto',vmin=0,vmax=1)
+	ax[2].pcolormesh(synth.chroma_features,shading='auto',vmin=0,vmax=1)
+
+	plt.show()
+	'''

@@ -49,28 +49,30 @@ def get_chromagram_features(chromagram_filtered,chromagram_unfiltered):
 		diff=  chromagram - sobel_mag
 		floored_diff = np.where(diff<=0,0,diff)	
 
-		diff_gradient_x = np.where(skf.sobel(floored_diff,axis=0) <0,0,skf.sobel(floored_diff,axis=0)) #laZY, MAKE A NEW VARIALE 
+		#this is messy, fix later
+		#don't want to compute x grad anymore, just skipping over this now
+		diff_gradient_x = floored_diff#np.where(skf.sobel(floored_diff,axis=0) <0,0,skf.sobel(floored_diff,axis=0)) #laZY, MAKE A NEW VARIALE 
 
 		clahe = ske.equalize_adapthist(diff_gradient_x,kernel_size=10,clip_limit=0.01)
-		clahe_thresh = np.where(clahe>0.25,clahe,0)
+		clahe_thresh = np.where(clahe>0.5,clahe,0)
 
 		clahe_max_only = np.zeros_like(clahe_thresh)
 		for i,column in enumerate(clahe_thresh.T):
 			pitch_class_with_max_value = np.argmax(column)
 			clahe_max_only[pitch_class_with_max_value,i] = clahe_thresh[pitch_class_with_max_value,i] 
 
-		filt_unfilt_features.append(clahe_max_only)
+		original_chromagram_masked = np.where(clahe_max_only>0, chromagram,0)
+		filt_unfilt_features.append(original_chromagram_masked)
 
-	filtered_features 	= filt_unfilt_features[0]
-	unfiltered_features = filt_unfilt_features[1]
+	filtered_features_masked_chromagram 	 = filt_unfilt_features[0]
+	unfiltered_features_masked_chromagram    = filt_unfilt_features[1]
 
-	non_zero_filtered  	= filtered_features >0
-	non_zero_unfiltered = unfiltered_features > 0
+	non_zero_filtered  	= filtered_features_masked_chromagram   > 0
+	non_zero_unfiltered = unfiltered_features_masked_chromagram > 0
 
 	intersection = non_zero_unfiltered == non_zero_filtered
 	
-	#filtered used here intersection here, but either could be used as the intersection is equal for filt and unfilt
-	filtered_intersection = np.where(intersection,filtered_features,0)
+	filtered_intersection = np.where(intersection,filtered_features_masked_chromagram,0)
 
 	return filtered_intersection
 
@@ -114,7 +116,7 @@ if __name__ =='__main__':
 	data_path = '/home/lucas/Documents/BSL-sonification/data/aneurisk/spectrograms/'
 	chromagram_path = '/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/'
 
-	sampling = 'full_model' # alternatively / eventually sac average
+	sampling = 'sac' # sac or full_model
 
 	cases = glob.glob(data_path+'c*')
 
@@ -154,6 +156,9 @@ if __name__ =='__main__':
 
 		fig, ax = plt.subplots(3,2,figsize=(15,15))
 		fig.suptitle(name)
+
+		bins = np.arange(0,filtered_chromagram.shape[1])
+		freqs =np.arange(0,Pxx_ave_unfiltered.shape[0]) 
 
 		ax[0][0].pcolormesh(bins,freqs,Pxx_ave_unfiltered,shading = 'gouraud')
 		ax[0][0].set_title('Unfiltered spectorgram')
