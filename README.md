@@ -13,8 +13,8 @@ Tools for sonification of BSL data, examples, documentation
 	<li>Figure out how to automate docs properly (DONE) </li>
 	<li> documentation for synth, pythonsynthdefs, chromagram, addsoundtovideo </li>
 	<li>finish other synthdefs - resynth, piched/noise only, chromagram, (done) flat_q (done)</li>
-	<li>make tool for computing an sonifying sac chromagrams, not global, as is done now</li>
-	<li>Alternatively/additionally, precompute all sac chromagrams so big matgrix doesn't have to be read every time</li>
+	<li>make tool for computing an sonifying sac chromagrams, not global, as is done now (DONE)</li>
+	<li>Alternatively/additionally, precompute all sac chromagrams so big matgrix doesn't have to be read every time (DONE)</li>
 	<li>Make a branch of BSL and document changes, eventually merge so these packages can work together</li>
 	<li>get new add_sound to video working (DONE)</li>
 	<li>Utility to bulk compute flat q etc. so we cna bulk compute q-sonifications for 50 cases</li>
