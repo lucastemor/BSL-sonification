@@ -29,6 +29,7 @@ import sys, glob, os, shutil
 from pathlib import Path
 from sonify.synth_classes.python_synthdefs import *
 from matplotlib import image as mplimage
+import matplotlib.pyplot as plt
 
 
 def render_video_from_frames(path_to_frames,desired_length,render_name):
@@ -45,11 +46,15 @@ def render_video_from_frames(path_to_frames,desired_length,render_name):
 
 def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
 
-	outfile = outdir.joinpath('mix_out.wav')
 	temp_outfile = outdir.joinpath('temp_audio.wav')
 	shutil.copy(str(audio_paths[0]), str(temp_outfile))
 
 	n_audio=len(audio_paths)
+
+	if n_audio == 1:
+		outfile = audio_paths[0]
+	else:
+		outfile = outdir.joinpath('mix_out.wav')
 
 	for i in range(n_audio)[1:]:
 		os.system(f'ffmpeg -y -i {str(temp_outfile)} -i {str(audio_paths[i])} -filter_complex amix=inputs=2:duration=longest {str(outfile)}')
@@ -73,12 +78,19 @@ if __name__ == '__main__':
 		iter_name 	 = sys.argv[4] #note to set to '' if none passed
 	except:
 		#case = 'c0053'
-		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053added_waveform/waveform_matrix._60fps_1stride.mp4' )
+		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053/waveform_matrix._60fps_1stride.mp4' )
 		
 		case = 'c0004'
-		video_path = 
+		video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0004/pathq.mp4')
 
-		iter_name = '_testing_timbral'
+
+		#case = 'c0032'
+		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0032/waveform_matrix2-2._60fps_1stride.mp4')
+
+		#case = 'c0060'
+		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0060/c0060waveform_matrix2-2._60fps_1stride.mp4')
+
+		iter_name = 'flat_q_chroma_frequencymod'
 		video_length = 20
 
 
@@ -117,19 +129,52 @@ if __name__ == '__main__':
 
 
 	filtered_chromagram		= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','filt_chroma.npy'))
-	unfiltered_chromagram 	= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','unfilt_chroma.npy'))
 
-
+	'''
 	flat_q_synth = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
 	flat_q_synth.looptime = video_length
 	flat_q_sound_file = outdir.joinpath('flat_q.wav')
 	flat_q_synth.listen(path=flat_q_sound_file)
 	flat_q_sound_file = outdir.joinpath('flat_q_rescale.wav')
 
-	chroma_synth = timbral_chromagram('four_osc_chromagram',filtered_chromagram,unfiltered_chromagram)
+	chroma_synth = timbral_chromagram('four_osc_chromagram',filtered_chromagram)
 	chroma_synth.looptime = video_length
 	chroma_synth.send_to_sc()
 	chroma_sound_file = outdir.joinpath('chromagram_features.wav')
 	chroma_synth.listen(path=chroma_sound_file) 
-
+	
 	add_tracks_to_video(video_path,outdir,iter_name,flat_q_sound_file,chroma_sound_file)
+	'''
+
+	
+	flat_q_chroma = flat_q_with_spectro_env_chromagram(q_array,r_array,Pxx_scaled,bins,freqs,filtered_chromagram)
+	flat_q_chroma.looptime = video_length
+	flat_q_chroma_sound_file = outdir.joinpath('flat_q_chroma.wav')
+	flat_q_chroma.listen(path=flat_q_chroma_sound_file)
+	flat_q_chroma_sound_file = outdir.joinpath('flat_q_chroma_rescale.wav')
+
+	add_tracks_to_video(video_path,outdir,iter_name,flat_q_chroma_sound_file)
+	
+
+	'''
+	fig,ax  = plt.subplots(3,1,figsize= (9,16))
+
+	ax[0].pcolormesh(bins,freqs,Pxx_scaled,shading='gouraud')
+	ax[1].pcolormesh(bins,np.arange(0,12),filtered_chromagram,shading='auto',vmin=0,vmax=1)
+	ax[2].pcolormesh(bins,np.arange(0,12),flat_q_chroma.chroma_features,shading='auto',vmin=0,vmax=1)
+
+	fig.suptitle(case)
+	ax[0].set_title('Spectrogram, filtered, scaled')
+	ax[1].set_title('Chromagram')
+	ax[2].set_title('Chromagram feature mask')
+
+	plt.savefig(outdir.joinpath(f'{case}_plots.png'))
+	plt.cla()
+	plt.close()
+	'''
+
+
+	sonification iteration -- flat q + spectrogam envelope (mapped to turbine buffeting sound) + chromagram (mapped to string-like sound).
+	Trying a new way of blending the two sounds by modulating the frequency of the pitched sounds with the noisey turbine signal.
+	Aesthetics are still sometimes irritating (c0053 sounds like a horror movie soundtrack haha)
+	Will discuss more tomorrow. 

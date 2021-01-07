@@ -56,7 +56,6 @@ if __name__ == '__main__':
 	r_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_r.npy')
 
 	chromagram_filtered   = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/sac/filt_chroma.npy')
-	chromagram_unfiltered = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/sac/unfilt_chroma.npy')
 
 	#Uncomment this block to test Pxx_blob
 	'''
@@ -67,20 +66,36 @@ if __name__ == '__main__':
 	'''
 
 	#Uncomment this block to test flat q with spectro envelope
-	'''
-	flat_q_test = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
-	flat_q_test.looptime = 10
+	
+	#flat_q_test = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)
+	#flat_q_test.looptime = 10
 	#we don't need to call send for realtime - the listen method will do this automatically
-	flat_q_test.listen(path='flat_q_test.wav')
-	'''
+	#flat_q_test.listen(path='flat_q_test.wav')
+	
+
+	#Uncomment this block to test flat q with spectro envelope and chromagram
+	
+	flat_q_chroma = flat_q_with_spectro_env_chromagram(q_array,r_array,Pxx_scaled,bins,freqs,chromagram_filtered)
+	flat_q_chroma.looptime = 20
+	flat_q_chroma.listen(path='flat_q_chroma_tttest.wav')
+	
+	#flat_q_chroma.free()
+	#fig,ax = plt.subplots(2,1)
+	#ax[0].pcolormesh(flat_q_chroma.chroma_features)
+	#ax[1].pcolormesh(flat_q_chroma.pitches_to_send.T)
+	
+	#we don't need to call send for realtime - the listen method will do this automatically
+	
+	
+
 
 	#uncomment to test simple chromagram
-	
-	synth = timbral_chromagram('four_osc_chromagram',chromagram_filtered,chromagram_unfiltered)
+	'''
+	synth = timbral_chromagram('four_osc_chromagram',chromagram_filtered)
 	synth.looptime = 5
 	synth.send_to_sc()
 	synth.listen('four_osc_chroma.wav') 
-	
+	'''
 
 	'''
 	fig, ax = plt.subplots(3,1,figsize=(5,10))

@@ -37,6 +37,54 @@ def get_unscaled_spectro(sampler,filtered=False,lowcut=25):
 
 	return Pxx_ave, freqs, bins
 
+
+def columnwise_threshold(chroma,max_min_diff,thresh,inverse=False):
+	"""
+	mask chromagram based on threshold condition from its column
+	"""
+	if inverse:
+		masking_col = np.where(max_min_diff>thresh,0,1)
+	else:
+		masking_col = np.where(max_min_diff>thresh,1,0)
+	return chroma*masking_col
+
+def column_max_mask(chroma):
+	"""
+	keep only max column value, 0s elsewhere
+	"""
+	chroma_max_only = np.zeros_like(chroma)
+	for i,column in enumerate(chroma.T):
+		row_with_max_value = np.argmax(column)
+		chroma_max_only[row_with_max_value,i] = chroma[row_with_max_value,i]
+
+	return chroma_max_only
+
+
+def get_chromagram_features(chromagram):
+
+	sobel_x = skf.sobel(chromagram,axis=0)
+	sobel_y = skf.sobel(chromagram,axis=1)
+	sobel_mag = np.hypot(sobel_x,sobel_y)
+
+	diff = chromagram - sobel_mag
+	floor_diff = np.where(diff<=0,0,diff)
+
+	sum_masked = columnwise_threshold(floor_diff,np.sum(floor_diff,axis=0),thresh=7,inverse=True)
+	max_features = column_max_mask(sum_masked)
+
+	return np.where(max_features!=0,chromagram,0)
+
+
+
+def get_chroma_features_from_Pxx(Pxx_filtered,n_chroma_bins, fs):
+	
+	chromagram  = librosa.feature.chroma_stft(S=Pxx_filtered,  n_chroma=n_chroma_bins, tuning=0,sr=fs)
+	chromagram_features = get_chromagram_features(chromagram)
+
+	return filtered_intersection
+
+'''
+#old, no lopnger in use -> simpler feature pipeline above
 def get_chromagram_features(chromagram_filtered,chromagram_unfiltered):
 	
 	filt_unfilt_features = []
@@ -75,18 +123,7 @@ def get_chromagram_features(chromagram_filtered,chromagram_unfiltered):
 	filtered_intersection = np.where(intersection,filtered_features_masked_chromagram,0)
 
 	return filtered_intersection
-
-
-
-def get_chroma_features_from_Pxx(Pxx_filtered,Pxx_unfiltered,n_chroma_bins, fs):
-	
-	chromagram_filtered   = librosa.feature.chroma_stft(S=Pxx_filtered,  n_chroma=n_chroma_bins, tuning=0,sr=fs)
-	chromagram_unfiltered = librosa.feature.chroma_stft(S=Pxx_unfiltered,n_chroma=n_chroma_bins, tuning=0,sr=fs)
-
-	filtered_intersection = get_chromagram_features(chromagram_filtered,chromagram_unfiltered)
-
-	return filtered_intersection
-
+'''
 
 '''
 #old, not used anymore -> loading data and computing spectro/chroma should be done elsewhere

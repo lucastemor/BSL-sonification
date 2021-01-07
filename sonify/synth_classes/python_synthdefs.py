@@ -156,14 +156,13 @@ class simple_chromagram(synth.precompute):
 	in future implement a class to sample 
 	"""
 
-	def __init__(self, chromagram_filtered, chromagram_unfiltered):
+	def __init__(self, chromagram_filtered):
 		"""
 		Important that Pxx is not the scaled Pxx 
 		"""
 		super().__init__()
 		self.synthdef = 'simple_chromagram'
 		self.chromagram_filtered   = chromagram_filtered
-		self.chromagram_unfiltered = chromagram_unfiltered
 		self.features_computed = False
 
 		self.starting_note = 261.63 #middle c, in hz
@@ -173,7 +172,7 @@ class simple_chromagram(synth.precompute):
 		self.generate_synthlist()
 
 	def compute_features(self):
-		self.chroma_features = get_chromagram_features(self.chromagram_filtered,self.chromagram_unfiltered)
+		self.chroma_features = get_chromagram_features(self.chromagram_filtered)
 		self.features_computed = True
 
 	def send_to_sc(self):
@@ -200,14 +199,13 @@ class timbral_chromagram(synth.precompute):
 	in future implement a class to sample 
 	"""
 
-	def __init__(self, timbre_synthdef, chromagram_filtered, chromagram_unfiltered):
+	def __init__(self, timbre_synthdef, chromagram_filtered):
 		"""
 		Important that Pxx is not the scaled Pxx 
 		"""
 		super().__init__()
 		self.synthdef = timbre_synthdef
 		self.chromagram_filtered   = chromagram_filtered
-		self.chromagram_unfiltered = chromagram_unfiltered
 		self.features_computed = False
 
 		self.starting_note = 261.63 #middle c, in hz
@@ -217,7 +215,7 @@ class timbral_chromagram(synth.precompute):
 		self.generate_synthlist()
 
 	def compute_features(self):
-		self.chroma_features = get_chromagram_features(self.chromagram_filtered,self.chromagram_unfiltered)
+		self.chroma_features = get_chromagram_features(self.chromagram_filtered)
 		self.features_computed = True
 
 	def send_to_sc(self):
@@ -235,3 +233,71 @@ class timbral_chromagram(synth.precompute):
 				names = [f'{param_name}{str(step).zfill(3)}' for step in range(self.chromagram_filtered.shape[1])]
 				for name,value in zip(names,param_value):
 					syn.__setattr__(name,value)
+
+
+class flat_q_with_spectro_env_chromagram(synth.realtime):
+	"""
+	Flat mapped q-criterion sonificationwith spectrogram envelope modulation with blended / amplitude modulated chromagram pitches
+	synth.realtime is needed as we are working with every simulation timestep instead of a small number of time bins
+	"""
+
+	def __init__(self,q_array,r_array,pxx,bins,freqs,chromagram_filtered):
+		super().__init__()
+		self.synthdef = 'flat_q_with_spectro_env_chromagram'
+
+		r_array /= r_array.max()
+		q_array *= 3.5	
+
+		self.q_array = q_array
+		self.r_array = r_array
+		
+		self.pxx = pxx
+		self.bins = bins
+
+		self.n_positions = q_array.shape[0]
+		
+		positions = np.linspace(0,1,int(self.n_positions/2) + 1) #temp variable
+		self.positions = np.append(positions,-1*np.flip(positions[1:-1]))
+
+		self.n_timesteps = q_array.shape[1]
+
+		_, self.envelope,_,_,_ = get_Pxx_blob_features(self.pxx.copy(),freqs) #this is probably an uncessary bottleneck - just compute envelope directly in future
+
+		#rescale and interpolate cutoff frequency envelope over all video frames
+		self.envelope /=2
+		self.interp_envelope = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,self.envelope)
+
+
+		#precompute the chromagram features here, plus initialize pitches  
+		self.chroma_features = get_chromagram_features(chromagram_filtered)
+		self.starting_note = 440#261.63 #middle c, in hz
+		self.n_chroma_bins = 12 #chromatic scale, 12 pitches
+		self.pitches =  [(self.starting_note*2**(i/self.n_chroma_bins)) for i in range (0,self.n_chroma_bins)] #limited to 1 octave
+
+		chroma_pitch_matrix = (np.array(self.pitches) * np.where(self.chroma_features>0,1,0).T)
+
+		#project 36 time bin chromagram onto 1250 timestep q-data
+		repeat_factor = np.ceil(self.n_timesteps/self.bins.shape[0])
+		self.pitches_to_send = chroma_pitch_matrix.repeat(repeat_factor,axis=0)#NOTE axis 0 used because we have transpose from above
+
+		#just to maintain naming convention - needed for synthlist generation for the q arrays.. sorry for the confusion 
+		self.freqs = np.zeros(self.n_positions)
+		
+		self.generate_synthlist()
+
+		#this doesn't need to be updated in realtime, only computed once, so we'll do it here
+		for each in range (self.n_positions):
+			self.synthlist[each].theta = float(self.positions[each])
+
+	def send_to_sc(self,timestep):
+		"""
+		Unlike precompute - this is called multiple times in the loop as recording progresess.
+		During playback, this is what is called by synth.realtime (parent class) 
+		Done for each step in range self.n_timesteps -> see synth.realtime for more
+		Assumes all computed on python client side
+		"""
+		for position,syn in enumerate(self.synthlist):
+			syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+			syn.r = float(self.r_array[position][timestep])
+			syn.e = float(self.interp_envelope[timestep])
+			syn.pitch = float(self.pitches_to_send[timestep].max())

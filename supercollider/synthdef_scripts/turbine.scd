@@ -2542,7 +2542,6 @@ SynthDef(\flat_q_with_spectro_env, {
 	e= 1,
 
 	theta = 0,
-	freq=0,
 	gate = 0.0;
 
 	var sig, car, mod;
@@ -2552,6 +2551,7 @@ SynthDef(\flat_q_with_spectro_env, {
 
 	sig = RLPF.ar(car,(q+mod+15),((1/(r*1000))+0.5),(3/(r*100)).poll,0) +
 	      RLPF.ar(car,(e+mod),((1/(r*1000))+0.5),1,0) ;
+
 	#w, x, y = PanB2.ar(sig, theta, 1);
 
     // B-format decode to quad
@@ -2560,15 +2560,69 @@ SynthDef(\flat_q_with_spectro_env, {
 	Out.ar(0,[a,b]); // reorder to my speaker arrangement: Lf Rf Lr Rr
 
 
-}).store; //turbine
+}).store; //flat_q_with_spectro_env
 )
+
+(0/(0+1)).round;
+
+(
+SynthDef(\flat_q_with_spectro_env_chromagram, {
+	arg
+	q = 1,
+	r= 0.0001,
+	e= 1,
+
+	theta = 0,
+	gate = 0.0,
+	pitch=0;
+
+	var sig, car, mod,sig2, subOsc,saw,square,sine;
+
+	car = BrownNoise.ar(1,0);
+	mod = BrownNoise.ar(1,0);
+
+	sig = RLPF.ar(car,(q+mod+15),((1/(r*1000))+0.5),(3/(r*100)),0) +
+	      RLPF.ar(car,(e+mod),((1/(r*1000))+0.5),1,0) ;
+
+	//sig2 = SinOsc.ar(440,0,0.7,SinOsc.ar(554.37,0,0.3,SinOsc.ar(659.25,0,0.5,0)));
+
+	pitch = pitch+(5*sig);
+
+	subOsc = SinOsc.ar(pitch/2,0,0.1,0);
+
+	square = Pulse.ar(pitch,0.9,0.1,0);
+	saw = Saw.ar(pitch,0.2,0);
+	sine = SinOsc.ar(pitch,0,0.6,0);
+
+	sig2 = subOsc + square+ saw + sine;
+
+	//sig2 = LPF.ar(sig2,4000,1,0)
+
+	sig2 = FreeVerb.ar(sig2,1,1,0.1,1,0)  * (pitch/(pitch+1)).round; //a hackey kind of get - signal is zeroed if 0 freq passed, moltuplied by 1 elsewhere -- will work for most frequencies in audible spectrum as pitch/(pitch+1) will round to 1 in most cases
+
+	// sig2 = SinOsc.ar((pitch+(5*sig)).poll) * (pitch/(pitch+1)).round;
+
+
+	sig = sig+(5*sig2);//*(sig*0.1));
+
+	#w, x, y = PanB2.ar(sig, theta, 1);
+
+    // B-format decode to quad
+    #a, b= DecodeB2.ar(2, w, x, y);
+
+	Out.ar(0,[a,b]); // reorder to my speaker arrangement: Lf Rf Lr Rr
+
+
+}).store; //flat_q_with_spectro_env_chromagram
+)
+
+
+Synth(\flat_q_with_spectro_env_chromagram, [\theta, 0, \q, 100, \r,0.01,\pitch, 400]);
+
+
+
+{ RLPF.ar(Saw.ar(200, 0.1), SinOsc.ar(XLine.kr(0.7, 300, 20), 1, 3600, 4000), ) }.play;
 
 s.prepareForRecord("/Users/Lucas/Documents/quarantineViz/flat_q/c0053/c0053sctest.wav",2);
 s.record;
 s.stopRecording;
-//
-Synth(\flat_q, [\theta, -0.5, \q, 0.5, \r,1]);
-
-{ RLPF.ar(Saw.ar(200, 0.1), SinOsc.ar(XLine.kr(0.7, 300, 20), 1, 3600, 4000), ) }.play;
-
-
