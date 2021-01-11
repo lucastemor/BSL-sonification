@@ -321,9 +321,11 @@ SynthDef(\four_osc_chromagram, {
 
 	sig = RLPF.ar(sig,4000,0.5,1,0);
 
+	sig = FreeVerb.ar(sig,1,1,0.1,1,0);
+
 	sig = sig*pitch_env;
 
-	Out.ar(0, Pan2.ar(sig*10));
+	Out.ar(0, Pan2.ar(sig*15));
 
 }).store; //four_osc_chromagram
 )
@@ -356,6 +358,8 @@ SynthDef(\testing_timbres, {
 
 	sig = RLPF.ar(sig,cutoff,rq,1,0);
 
+	sig = FreeVerb.ar(sig,1,1,0.1,1,0);
+
 	Out.ar(0,Pan2.ar(sig))
 
 }
@@ -364,7 +368,7 @@ SynthDef(\testing_timbres, {
 
 (
 Synth(\testing_timbres,[
-	\freq,440,
+	\freq,0,
 	\subOsc_mul, 0.05,
 	\square_mul, 0.1,
 	\saw_mul   , 0.2,

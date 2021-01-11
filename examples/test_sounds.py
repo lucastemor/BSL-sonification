@@ -45,17 +45,19 @@ def get_unscaled_spectro(path,filtered=False,sample_density = 0.4):
 
 if __name__ == '__main__':
 
-	#load some data -- e.g., sac spectrogram
-	data_path = Path('/home/lucas/Documents/BSL-sonification/data/aneurisk/spectrograms/c0053')
+	case = 'c0004'
 
-	Pxx_scaled = np.load(data_path.joinpath('sac_spectro.npy'))
+	#load some data -- e.g., sac spectrogram
+	data_path = Path(f'/home/lucas/Documents/BSL-sonification/data/aneurisk/spectrograms/{case}/sac_averaged/')
+
+	Pxx_scaled = np.load(data_path.joinpath('sac_spectro_unfiltered_scaled.npy'))
 	freqs = np.load(data_path.joinpath('freqs.npy'))
 	bins = np.load(data_path.joinpath('bins.npy'))
 
-	q_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_q.npy')
-	r_array = np.load('/home/lucas/Documents/sonification/flat_q_data/c0053/master_sonification_r.npy')
+	q_array = np.load(f'/home/lucas/Documents/sonification/flat_q_data/{case}/master_sonification_q.npy')
+	r_array = np.load(f'/home/lucas/Documents/sonification/flat_q_data/{case}/master_sonification_r.npy')
 
-	chromagram_filtered   = np.load('/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/c0053/sac/filt_chroma.npy')
+	chromagram_filtered   = np.load(f'/home/lucas/Documents/BSL-sonification/data/aneurisk/chromagrams/{case}/sac/filt_chroma.npy')
 
 	#Uncomment this block to test Pxx_blob
 	'''
@@ -74,11 +76,11 @@ if __name__ == '__main__':
 	
 
 	#Uncomment this block to test flat q with spectro envelope and chromagram
-	
+	'''
 	flat_q_chroma = flat_q_with_spectro_env_chromagram(q_array,r_array,Pxx_scaled,bins,freqs,chromagram_filtered)
 	flat_q_chroma.looptime = 20
 	flat_q_chroma.listen(path='flat_q_chroma_tttest.wav')
-	
+	'''
 	#flat_q_chroma.free()
 	#fig,ax = plt.subplots(2,1)
 	#ax[0].pcolormesh(flat_q_chroma.chroma_features)
@@ -86,8 +88,6 @@ if __name__ == '__main__':
 	
 	#we don't need to call send for realtime - the listen method will do this automatically
 	
-	
-
 
 	#uncomment to test simple chromagram
 	'''
@@ -107,3 +107,8 @@ if __name__ == '__main__':
 
 	plt.show()
 	'''
+
+	#Uncomment to test peakiness
+	flat_q_peakiness = flat_q_with_peakiness(q_array,r_array,Pxx_scaled,bins,freqs)
+	flat_q_peakiness.looptime = 20
+	flat_q_peakiness.listen(path='flat_q_chroma_peaky_test.wav')

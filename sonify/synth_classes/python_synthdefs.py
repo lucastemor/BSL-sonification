@@ -9,6 +9,7 @@ import numpy as np
 
 from sonify.tools.spectro_harmonic_preprocessing import get_Pxx_blob_features
 from sonify.tools.chromagram import get_chromagram_features
+from sonify.tools.peakiness import spectrogram_peakiness
 
 class Pxx_blob(synth.precompute):
 	"""
@@ -301,3 +302,61 @@ class flat_q_with_spectro_env_chromagram(synth.realtime):
 			syn.r = float(self.r_array[position][timestep])
 			syn.e = float(self.interp_envelope[timestep])
 			syn.pitch = float(self.pitches_to_send[timestep].max())
+
+
+
+
+class flat_q_with_peakiness(synth.realtime):
+
+	def __init__(self,q_array,r_array,pxx,bins,freqs):
+		super().__init__()
+		self.synthdef = 'flat_q_with_peakiness'
+
+		r_array /= r_array.max()
+		q_array *= 3.5	
+
+		self.q_array = q_array
+		self.r_array = r_array
+		
+		self.pxx = pxx
+		self.bins = bins
+
+		self.n_positions = q_array.shape[0]
+		
+		positions = np.linspace(0,1,int(self.n_positions/2) + 1) #temp variable
+		self.positions = np.append(positions,-1*np.flip(positions[1:-1]))
+
+		self.n_timesteps = q_array.shape[1]
+
+		_, self.envelope,_,_,_ = get_Pxx_blob_features(self.pxx.copy(),freqs) #this is probably an uncessary bottleneck - just compute envelope directly in future
+
+		#rescale and interpolate cutoff frequency envelope over all video frames
+		self.envelope /=2
+		self.interp_envelope = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,self.envelope)
+
+		all_peakiness = spectrogram_peakiness(self.pxx.copy(),self.bins)
+		peakiness_rescaled = np.where(all_peakiness>2,all_peakiness,0)
+		#interpolate peakiness over number of timesteps
+		self.peakiness_interpolated = np.interp(np.linspace(0,self.bins.max(),self.n_timesteps),self.bins,peakiness_rescaled)
+
+		#just to maintain naming convention - needed for synthlist generation for the q arrays.. sorry for the confusion 
+		self.freqs = np.zeros(self.n_positions)
+		
+		self.generate_synthlist()
+
+		#this doesn't need to be updated in realtime, only computed once, so we'll do it here
+		for each in range (self.n_positions):
+			self.synthlist[each].theta = float(self.positions[each])
+
+	def send_to_sc(self,timestep):
+		"""
+		Unlike precompute - this is called multiple times in the loop as recording progresess.
+		During playback, this is what is called by synth.realtime (parent class) 
+		Done for each step in range self.n_timesteps -> see synth.realtime for more
+		Assumes all computed on python client side
+		"""
+		for position,syn in enumerate(self.synthlist):
+			syn.q = float(self.q_array[position][timestep]) #+ interp_envelope[timestep])
+			syn.r = float(self.r_array[position][timestep])
+			syn.e = float(self.interp_envelope[timestep])
+			syn.peakiness = float(self.peakiness_interpolated[timestep])

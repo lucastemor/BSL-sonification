@@ -2586,7 +2586,7 @@ SynthDef(\flat_q_with_spectro_env_chromagram, {
 
 	//sig2 = SinOsc.ar(440,0,0.7,SinOsc.ar(554.37,0,0.3,SinOsc.ar(659.25,0,0.5,0)));
 
-	pitch = pitch+(5*sig);
+	pitch = (pitch+20)+(10*sig);
 
 	subOsc = SinOsc.ar(pitch/2,0,0.1,0);
 
@@ -2596,19 +2596,20 @@ SynthDef(\flat_q_with_spectro_env_chromagram, {
 
 	sig2 = subOsc + square+ saw + sine;
 
-	//sig2 = LPF.ar(sig2,4000,1,0)
+	sig2 = LPF.ar(sig2,4000,1,0);
 
-	sig2 = FreeVerb.ar(sig2,1,1,0.1,1,0)  * (pitch/(pitch+1)).round; //a hackey kind of get - signal is zeroed if 0 freq passed, moltuplied by 1 elsewhere -- will work for most frequencies in audible spectrum as pitch/(pitch+1) will round to 1 in most cases
+	sig2 = FreeVerb.ar(sig2,1,1,0.1,1,0); // * (pitch/(pitch+1)).round; //a hackey kind of get - signal is zeroed if 0 freq passed, moltuplied by 1 elsewhere -- will work for most frequencies in audible spectrum as pitch/(pitch+1) will round to 1 in most cases
 
 	// sig2 = SinOsc.ar((pitch+(5*sig)).poll) * (pitch/(pitch+1)).round;
 
 
-	sig = sig+(5*sig2);//*(sig*0.1));
+	sig = (sig+(3*sig2*(e/600))*0.5);//*(sig*0.1));
 
 	#w, x, y = PanB2.ar(sig, theta, 1);
 
     // B-format decode to quad
     #a, b= DecodeB2.ar(2, w, x, y);
+
 
 	Out.ar(0,[a,b]); // reorder to my speaker arrangement: Lf Rf Lr Rr
 
@@ -2618,6 +2619,108 @@ SynthDef(\flat_q_with_spectro_env_chromagram, {
 
 
 Synth(\flat_q_with_spectro_env_chromagram, [\theta, 0, \q, 100, \r,0.01,\pitch, 400]);
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+(
+SynthDef(\flat_q_with_peakiness,{
+
+	arg
+	q = 1,
+	r= 0.0001,
+	e= 1,
+
+	theta = 0,
+	gate = 0.0,
+	peakiness=0;
+
+	var car,mod,sig, sig2, sineosc, lfo1, lfo2, freq;
+
+	car = BrownNoise.ar(1,0);
+	mod = BrownNoise.ar(1,0);
+
+	sig = RLPF.ar(car,(q+mod+15),((1/(r*1000))+0.5),(3/(r*100)),0) +
+	      RLPF.ar(car,(e+mod),((1/(r*1000))+0.5),1,0) ;
+
+	//sig2 = SinOsc.ar(440,0,peakiness/2,0);
+	lfo1 = Limiter.ar(SinOsc.ar(2,0,1,0)+2,1,0.01);
+	lfo2 = SinOsc.ar(9,0,10,0);
+
+	freq = 880+lfo2;
+
+	sineosc = DynKlang.ar(`[[freq,freq*3/2,freq*2], [0.5,0.1,0.05], nil],1,0);
+	sineosc = sineosc + PinkNoise.ar(0.01,0);
+	sig2 = (sineosc * lfo1) * peakiness;
+
+	sig2 = Limiter.ar(sig2,1,0.01);
+
+	sig = (1*sig) + ((1*sig2*(e/600)));
+
+
+	#w, x, y = PanB2.ar(sig, theta, 1);
+
+    // B-format decode to quad
+    #a, b= DecodeB2.ar(2, w, x, y);
+
+	Out.ar(0,[a,b]);
+
+}).store;
+)
+
+
+
+{Pan2.ar(Limiter.ar(SinOsc.ar(440,0,11000,0),1,0.01))}.play;
+{Pan2.ar(SinOsc.ar(440,0,,0))}.play;
+
+
+(
+SynthDef(\flute_kind_of,{
+
+	arg freq=440,
+	amp = 1,
+	out=0;
+
+	var sineosc, lfo1, lfo2,sig;
+
+	lfo1 = Limiter.ar(SinOsc.ar(2,0,1,0)+2,1,0.01);
+	lfo2 = SinOsc.ar(9,0,10,0);
+
+	//sineosc = SinOsc.ar(freq+lfo2,0,1,0);
+	freq = freq+lfo2;
+
+	sineosc = DynKlang.ar(`[[freq,freq*3/2,freq*2], [0.5,0.1,0.05], nil],1,0);
+
+	sineosc = sineosc + PinkNoise.ar(0.01,0);
+
+	sig = (sineosc * lfo1) * amp;
+
+	Out.ar(out,Pan2.ar(sig,0))
+
+
+}).add;
+)
+
+Synth(\flute_kind_of,[\freq,440]);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

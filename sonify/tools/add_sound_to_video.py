@@ -80,17 +80,17 @@ if __name__ == '__main__':
 		#case = 'c0053'
 		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0053/waveform_matrix._60fps_1stride.mp4' )
 		
-		case = 'c0004'
-		video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0004/pathq.mp4')
+		#case = 'c0004'
+		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0004/pathq.mp4')
 
 
 		#case = 'c0032'
 		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0032/waveform_matrix2-2._60fps_1stride.mp4')
 
-		#case = 'c0060'
-		#video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0060/c0060waveform_matrix2-2._60fps_1stride.mp4')
+		case = 'c0060'
+		video_path = Path('/home/lucas/Documents/viz/renders/Matrix_iterations/aneurisk/c0060/c0060waveform_matrix2-2._60fps_1stride.mp4')
 
-		iter_name = 'flat_q_chroma_frequencymod'
+		iter_name = 'flat_q_peakiness'
 		video_length = 20
 
 
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 	q_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_q.npy'))
 	r_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_r.npy'))
 
-	Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','sac_spectro_filtered_scaled.npy'))
+	Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','sac_spectro_unfiltered_scaled.npy'))
 	bins 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','bins.npy'))
 	freqs 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','freqs.npy'))	
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 	add_tracks_to_video(video_path,outdir,iter_name,flat_q_sound_file,chroma_sound_file)
 	'''
 
-	
+	'''
 	flat_q_chroma = flat_q_with_spectro_env_chromagram(q_array,r_array,Pxx_scaled,bins,freqs,filtered_chromagram)
 	flat_q_chroma.looptime = video_length
 	flat_q_chroma_sound_file = outdir.joinpath('flat_q_chroma.wav')
@@ -154,7 +154,16 @@ if __name__ == '__main__':
 	flat_q_chroma_sound_file = outdir.joinpath('flat_q_chroma_rescale.wav')
 
 	add_tracks_to_video(video_path,outdir,iter_name,flat_q_chroma_sound_file)
-	
+	'''
+
+	flat_q_peakiness = flat_q_with_peakiness(q_array,r_array,Pxx_scaled,bins,freqs)
+	flat_q_peakiness.looptime = video_length
+	flat_q_peakiness_sound_file = outdir.joinpath('flat_q_peak.wav')
+
+	flat_q_peakiness.listen(path=flat_q_peakiness_sound_file)
+	flat_q_peakiness_sound_file = outdir.joinpath('flat_q_peak_rescale.wav')
+
+	add_tracks_to_video(video_path,outdir,iter_name,flat_q_peakiness_sound_file)
 
 	'''
 	fig,ax  = plt.subplots(3,1,figsize= (9,16))
@@ -172,9 +181,3 @@ if __name__ == '__main__':
 	plt.cla()
 	plt.close()
 	'''
-
-
-	sonification iteration -- flat q + spectrogam envelope (mapped to turbine buffeting sound) + chromagram (mapped to string-like sound).
-	Trying a new way of blending the two sounds by modulating the frequency of the pitched sounds with the noisey turbine signal.
-	Aesthetics are still sometimes irritating (c0053 sounds like a horror movie soundtrack haha)
-	Will discuss more tomorrow. 
