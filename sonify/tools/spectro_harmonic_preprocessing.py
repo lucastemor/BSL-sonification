@@ -12,7 +12,7 @@ from bsl import spectrogram_features
 import scipy.ndimage as ndimage
 import numpy as np
 
-def n_octa_arpeggio(n,groupID,shift, fundamental=220):
+def n_octa_arpeggio(n,groupID,shift, fundamental=262):
 	"""Determine where in the major chord the passed frequency sits. We also impose a perceptual boundary
 	at which the frequency stack of triad notes resets so we don't have something like the 24th detected band being a triad frequency that
 	is exteremly high pitched. 
@@ -170,7 +170,7 @@ def getPitches(blob):
 		    	#difference is where it is - where it started                                                            		
 		        difference = nonzero_index[0][j] - unique_label_dict[label[j]]    
 		        #frequency is original freq plus difference # of half steps          		
-		        col[nonzero_index[0][j]] = n_octa_arpeggio(9,label[j],shift=0.5*difference)	    
+		        col[nonzero_index[0][j]] = n_octa_arpeggio(9,label[j],shift=0.0*difference)	    
 
 
 	return(masked_label,labeled_array)

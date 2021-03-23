@@ -96,6 +96,63 @@ class Pxx_blob(synth.precompute):
 					syn.__setattr__(name,value)
 
 
+
+class spectro_harmonics(synth.precompute):
+	def __init__(self, pxx, freqs, bins):
+		super().__init__()
+		self.synthdef = 'pitched_only'
+		self.freqs = freqs
+		self.bins  = bins
+		self.pxx = pxx
+
+		self.features_computed = False
+
+		self.generate_synthlist()
+
+
+	def compute_features(self):
+		self.active,self.noise,self.pitches, self.labels, self.relativePeakHeight  =  get_Pxx_blob_features(self.pxx.copy(),self.freqs)
+		self.features_computed = True
+
+	def send_to_sc(self):
+		"""
+		Detect features and send the matricies to supercollider
+		Important to note that you cannot iterate over numpy arrays to send to sc -- must be converted to a list first
+		"""
+		if self.features_computed == False:
+			self.compute_features()
+
+		freqs = self.freqs.tolist()
+
+		scaling_factor = self.noise.min()
+		if scaling_factor == 0:
+			scaling_factor = sorted(np.unique(self.noise))[1]
+
+
+		cut_row = ((self.noise)/(scaling_factor)).tolist()
+		n_bins = len(self.bins)
+
+		for idx,syn in enumerate(self.synthlist):
+			if idx < self.freqs.shape[0]:
+				pxx_row = self.relativePeakHeight[idx].tolist()
+				act_row = self.active[idx].tolist() 				#which harmonics are active
+				pitch_row = self.pitches[idx].tolist() 				#pitch of active harmonics
+				syn.timestretch = self.looptime
+
+				param_names 	= ['cut_','pxx_','act_','ph_']
+				param_values 	= [cut_row,pxx_row,act_row,pitch_row]
+
+			#exception (i.e., if there are more synths in the synthlist than there are spectrogram dimensions) if envelope synth (eg., click) is to be appeneded to the end of synthlist 
+			else:
+				param_name = 'cut_'
+				param_value = cut_row
+
+			for param_name,param_value in zip(param_names,param_values): #this loop replaces the hardcoding of each time bin. This is where we set the class attributes on the sc server
+				names = [f'{param_name}{str(step).zfill(3)}' for step in range(n_bins)]
+				for name,value in zip(names,param_value):
+					syn.__setattr__(name,value)
+
+
 class flat_q_with_spectro_env(synth.realtime):
 	"""
 	Flat mapped q-criterion sonificationwith spectrogram envelope modulation.
