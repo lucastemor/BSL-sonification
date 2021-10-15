@@ -1,7 +1,7 @@
 // Handy functions for setup etc. Eventually automate through python
 
 //Set where synthdefs will be saved
-SynthDef.synthDefDir = "/home/lucas/Documents/BSL-sonification/supercollider/synthdefs";
+SynthDef.synthDefDir = "/home/bsl/Documents/BSL-sonification/supercollider/synthdefs";
 
 //set memory allocation -- this seems to work so far for everything
 s.options.numWireBufs = 256;
@@ -13,7 +13,7 @@ Server.default.options.outDevice_("Built-in Output");
 Server.default.options.outDevice_("Soundflower (2ch)");
 
 //Chnages wont' take effect until reboot
-//If on Linux make sure supercollider is manually reconnected to PulseAudio JACK sources
+//If on Linux make sure supercollider is manually reconnected to PulseAudio JACK sources - instlal qjackctl
 s.reboot;
 
 //Test tone

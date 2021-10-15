@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
 		#cases = ['c0053','c0004','c0032','c0060']
 		cases = ['c0053']
-		video_paths = [Path('/home/lucas/Documents/viz/renders/ICAD2021/c0053q/second/added_spectro/c0053_spectro_c0053volume._70fps_1stride.mp4')]
+		video_paths = [Path('/home/bsl/Documents/Lucas/aneurisk/q-iso/c0053/animation/c0053_q=0.5_animation._70fps_1stride.mp4')]
 		'''
 		video_paths = [Path('/home/lucas/Documents/viz/renders/Meetings/presentation-vids/Sonifications/c0053_q/c0053_q._80fps_1stride.mp4'),
 					   Path('/home/lucas/Documents/viz/renders/Meetings/presentation-vids/Sonifications/c0004_q/c0004_q._80fps_1stride.mp4'),
@@ -120,13 +120,13 @@ if __name__ == '__main__':
 	for case,video_path in zip(cases,video_paths):
 
 
-		iter_name = f'{case}_ICAD-viz2'
+		iter_name = f'{case}_Dan-viz'
 		video_length = 20
 
 
 		########### GENERAL I/O SETUP #################################################
 
-		base_path = Path('/home/lucas/Documents/BSL-sonification')
+		base_path = Path('/home/bsl/Documents/BSL-sonification')
 
 		render_name = f'{case}_{video_path.stem}_{iter_name}'
 		outdir = base_path.joinpath('output',case,render_name)
@@ -153,12 +153,12 @@ if __name__ == '__main__':
 		q_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_q.npy'))
 		r_array 	= np.load(base_path.joinpath('data','aneurisk','flat_q_data',case,'master_sonification_r.npy'))
 
-		Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','sac_spectro_unfiltered_scaled.npy'))
-		bins 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','bins.npy'))
-		freqs 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'sac_averaged','freqs.npy'))	
+		Pxx_scaled  = np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'S.npy'))
+		bins 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'bins.npy'))
+		freqs 		= np.load(base_path.joinpath('data','aneurisk','spectrograms',case,'freqs.npy'))	
 
 
-		filtered_chromagram		= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','filt_chroma.npy'))
+		#filtered_chromagram		= np.load(base_path.joinpath('data','aneurisk','chromagrams',case,'sac','filt_chroma.npy'))
 
 		
 		flat_q_synth = flat_q_with_spectro_env(q_array,r_array,Pxx_scaled,bins,freqs)

@@ -37,7 +37,7 @@ class synth:
 		
 		sc_path = '/Applications/SuperCollider.app/Contents/Resources/scsynth'
 		sc.sc.start(sc_path, startscsynth=0)
-		sc.sc.synthdefpath = '/home/lucas/Documents/BSL-sonification/supercollider/synthdefs/' 
+		sc.sc.synthdefpath = '/home/bsl/Documents/BSL-sonification/supercollider/synthdefs' 
 
 		self.audio_device = 'pulse' #'Soundflower (2ch)' --> for mac
 		self.synthdef = None

@@ -34,10 +34,26 @@ Tools for sonification of BSL data, examples, documentation
 
 
 <b>Install  instructions (just taking notes so I can remember everything that has to be done):</b>
+
+1. Install supercollider - sudo apt-get supercollider 
+
+2.  Setting up JACK and pulseaudio for recording (Linux)
 <ul>
-	<li>other dependancy list - numpy, pyaudio, etc .. </li>
+	<li>sudo apt-get install qjackctl pulseaudio-module-jack</li>
+	<li>Then configure qjackctl to run the following command after startup. Copy it into "Setup..." > "Options" > "Execute script after Startup":</li>
+	<li>pacmd set-default-sink jack_out</li>
+	<li>see https://askubuntu.com/questions/572120/how-to-use-jack-and-pulseaudio-alsa-at-the-same-time-on-the-same-audio-device for more info on above</li>
+	<li>Restart audio w/ pulseaudio -k && sudo alsa force-reload</li>
+	<li>Open ubuntu settings > sound > output device change to Jack sink. Input device to Jack source
+	<li>? I am stuck .. switching to mac ... </li>
+</ul>
+
+
+<ul>
+	<li>other dependancy list - numpy, pyaudio, librosa, pyvistaqt, skimage etc .. </li>
 	<li>pip install -e BSL-sonification/supercollider/.  for sc-pytohn library</li>
 	<li>pip install -e BSL-sonification/. for sonification library</li>
+	<li>pip install -e BSL-sonification/BSL-tools/. for Dan's tools</li>
 	<li>synth class -> set synthdef path and sc path</li>
 	<li>choose sound device</li>
 	<li>handy.scd setup</li>
