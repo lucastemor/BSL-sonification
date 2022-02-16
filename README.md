@@ -26,14 +26,36 @@ Tools for sonification of BSL data, examples, documentation
 
 <b>To do lower priority:</b>
 <ul>
-	<li>Ckeaner argument specification for add_sound_to_video.py</li>
+	<li>Cleaner argument specification for add_sound_to_video.py</li>
 	<li>clean up spectroharmonic_preprocessing.py</li>
 	<li>clean up flat_q_with_spectro_env.py</li>
 </ul>
 
 
 
-<b>Install  instructions (just taking notes so I can remember everything that has to be done):</b>
+## MacOs install instructions
+
+
+1. Install supercollider (for synthesis)
+2. Install soundflower (for recording)
+3. Follow steps to set up multi-output device
+4. In supercollider handy.scd change default device settings - e.g., Server.default.options.outDevice_("Soundflower (2ch)");
+5. Change memory alocation as well now that you're here, and remember to reboot server
+6. Test audio - open BSL-sonification/supercollider/synthdefscripts/handy.scd, boot the server and play the line with the sine tone
+
+7. conda environment: conda create -n sonify numpy pyaudio scikit-image scipy ; conda activate sonify; conda install -c conda-forge librosa; conda install -c conda-forge pyvista;  conda install -c conda-forge pyvistaqt; conda install ipython
+8. pip install -e BSL-sonification/supercollider/.  for sc-pytohn library
+9. pip install -e BSL-sonification/. for sonification library
+10. pip install -e BSL-sonification/BSL-tools/. for Dan's tools
+11. synth class (BSL-sonification/sonify/synth_classes/synth.py) -> set synthdef (e.g., /Documents/BSL-sonification/supercollider/synthdefs) path and sc path (e.g., '/Applications/SuperCollider.app/Contents/Resources/scsynth')
+
+12. Change synth.audio_device attribute to be the same as your device from step 4
+13.
+
+
+
+
+<b>Linnux Install  instructions (just taking notes so I can remember everything that has to be done):</b>
 
 1. Install supercollider - sudo apt-get supercollider 
 

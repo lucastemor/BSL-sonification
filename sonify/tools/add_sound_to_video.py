@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
 		#cases = ['c0053','c0004','c0032','c0060']
 		cases = ['c0053']
-		video_paths = [Path('/home/bsl/Documents/Lucas/aneurisk/q-iso/c0053/animation/c0053_q=0.5_animation._70fps_1stride.mp4')]
+		video_paths = [Path('/Users/BSL/Downloads/animation-only/c0053_q=0.5_animation._70fps_1stride.mp4')]
 		'''
 		video_paths = [Path('/home/lucas/Documents/viz/renders/Meetings/presentation-vids/Sonifications/c0053_q/c0053_q._80fps_1stride.mp4'),
 					   Path('/home/lucas/Documents/viz/renders/Meetings/presentation-vids/Sonifications/c0004_q/c0004_q._80fps_1stride.mp4'),
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
 		########### GENERAL I/O SETUP #################################################
 
-		base_path = Path('/home/bsl/Documents/BSL-sonification')
+		base_path = Path('/Users/BSL/Documents/BSL-sonification')
 
 		render_name = f'{case}_{video_path.stem}_{iter_name}'
 		outdir = base_path.joinpath('output',case,render_name)

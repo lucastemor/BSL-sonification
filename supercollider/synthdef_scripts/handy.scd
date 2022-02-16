@@ -11,6 +11,8 @@ s.options.memSize = 8 * 48*1024; // in KB (4*48 MB)
 ServerOptions.devices;
 Server.default.options.outDevice_("Built-in Output");
 Server.default.options.outDevice_("Soundflower (2ch)");
+Server.default.options.outDevice_("Sonify");
+Server.default.options.outDevice_("ScreenRecordwithAudio");
 
 //Chnages wont' take effect until reboot
 //If on Linux make sure supercollider is manually reconnected to PulseAudio JACK sources - instlal qjackctl
@@ -20,4 +22,4 @@ s.reboot;
 {Pan2.ar(SinOsc.ar(440))}.play;
 
 //Useful bash command if having issues on linux with audio - forcekill and restart pulseaudio
-pulseaudio -k && sudo alsa force-reload
+pulseaudio -k && sudo alsa force-reloads
