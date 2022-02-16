@@ -37,11 +37,11 @@ Tools for sonification of BSL data, examples, documentation
 
 
 1. Install supercollider (for synthesis)
-2. Install soundflower (for recording)
-3. Follow steps to set up multi-output device
-4. In supercollider handy.scd change default device settings - e.g., Server.default.options.outDevice_("Soundflower (2ch)");
-5. Change memory alocation as well now that you're here, and remember to reboot server
-6. Test audio - open BSL-sonification/supercollider/synthdefscripts/handy.scd, boot the server and play the line with the sine tone
+2. Install Loopback for audio routing/recording. Note there are alternatives like soundflower or Jackctl that require a bit more setup but are free. Just need to create a virtual adoip device
+3. Route loopback autop to output channels 1&2 and add MacOS' Built-in Output as a monitoring device
+4. Open ./supercollider/synthdef_scripts/handy.scd using supercollider and change default device settings to the virtual audio device - e.g., Server.default.options.outDevice_("Loopback Audio");
+5. Change memory alocation as well now that you're here (working defaults are saved), and remember to reboot server to initiate any changes
+6. Test audio - open BSL-sonification/supercollider/synthdefscripts/handy.scd, boot the server and play the line with the sine tone. If you don't hear anything then you did not correctly route audio from Supercollider to the virtual device to the Mac's speakers 
 
 7. conda environment: conda create -n sonify numpy pyaudio scikit-image scipy ; conda activate sonify; conda install -c conda-forge librosa; conda install -c conda-forge pyvista;  conda install -c conda-forge pyvistaqt; conda install ipython
 8. pip install -e BSL-sonification/supercollider/.  for sc-pytohn library
@@ -49,13 +49,13 @@ Tools for sonification of BSL data, examples, documentation
 10. pip install -e BSL-sonification/BSL-tools/. for Dan's tools
 11. synth class (BSL-sonification/sonify/synth_classes/synth.py) -> set synthdef (e.g., /Documents/BSL-sonification/supercollider/synthdefs) path and sc path (e.g., '/Applications/SuperCollider.app/Contents/Resources/scsynth')
 
-12. Change synth.audio_device attribute to be the same as your device from step 4
-13.
+12. Change synth.audio_device attribute to be the same as your device from step 4 (e.g., "Loopack audio")
+13. You should be able to run add_sound_to_video.py to generate an example sonificaiton+visualziation
 
 
 
 
-<b>Linnux Install  instructions (just taking notes so I can remember everything that has to be done):</b>
+## Linnux Install  instructions **incomplete** (just taking notes so I can remember everything that has to be done):</b>
 
 1. Install supercollider - sudo apt-get supercollider 
 

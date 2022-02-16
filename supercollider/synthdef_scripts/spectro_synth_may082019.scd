@@ -896,7 +896,7 @@ SynthDef(\pitched_only, {
 	//Out.ar(0, Pan2.ar(pitched*5*amp_env));
 	//Out.ar(0, Pan2.ar(pitched+noise));
 	//Out.ar(0, Pan2.ar(pitched));
-	Out.ar(0, Pan2.ar(pitched,0,0.8*amp_env*freq_env)); //panning and loudness
+	Out.ar(0, Pan2.ar(pitched,0,0.05*amp_env*freq_env)); //panning and loudness
 }).store; //pitched_only
 )
 )

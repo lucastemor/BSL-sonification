@@ -39,7 +39,7 @@ class synth:
 		sc.sc.start(sc_path, startscsynth=0)
 		sc.sc.synthdefpath = '/Users/BSL/Documents/BSL-sonification/supercollider/synthdefs' 
 
-		self.audio_device = 'Soundflower (2ch)'#'pulse' #'Soundflower (2ch)' --> for mac
+		self.audio_device = 'Loopback Audio'#'pulse' (linux?) #'Soundflower (2ch)' --> for mac
 		self.synthdef = None
 		self.synthlist = []	
 		self.freqs = None
