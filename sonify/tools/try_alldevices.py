@@ -1,5 +1,5 @@
 '''
-have 440 Hz test tone playing in supercollider + jack
+have 440 Hz test tone playing in supercollider + jack (if linux)
 loop through device options to try and capture the tone
 
 Troubleshooting steps that worked:

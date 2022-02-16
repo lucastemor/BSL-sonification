@@ -60,7 +60,7 @@ def add_tracks_to_video(video_path,outdir,itername,*audio_paths):
 		os.system(f'ffmpeg -y -i {str(temp_outfile)} -i {str(audio_paths[i])} -filter_complex amix=inputs=2:duration=longest {str(outfile)}')
 		shutil.copy(str(outfile), str(temp_outfile))
 
-	#finally, add fade to eliminate the popping
+	#finally, add fade to eliminatsounde the popping
 	os.system(f'ffmpeg -y -i {str(temp_outfile)} -af "afade=t=in:st=0:d=0.1" {str(outfile)}')
 	os.remove(str(temp_outfile))
 	os.system(f'ffmpeg -y -i {str(video_path)} -i {str(outfile)} -filter:a "volume=4" -map 0 -map 1 -c:a aac {str(outdir.joinpath(f"{itername}_final.mp4"))}')
